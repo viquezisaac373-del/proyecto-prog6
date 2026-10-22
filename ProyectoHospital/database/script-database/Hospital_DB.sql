@@ -1,5 +1,5 @@
 /* =====================================================================
-   HOSPITAL_DB_REVISION - PROPUESTA DE REVISION (19 tablas) - SQL Server
+   HOSPITAL_DB - PROPUESTA DE REVISION (19 tablas) - SQL Server
    Proyecto de Programacion VI - ASP.NET - UTC
 
    Basado en el script original compartido por el equipo.
@@ -12,8 +12,8 @@
      * Franjas de cita no exceden la hora de cierre.
 
    IMPORTANTE:
-     - USAR SOLO EN UNA BD NUEVA DE PRUEBA: Hospital_DB_Revision.
-     - No elimina ni altera la BD Hospital_DB original.
+     - Ejecutar solo para instalacion inicial sobre una BD Hospital_DB vacia.
+     - No elimina ni reemplaza datos de bases ya existentes.
      - No implementa aun la transaccion completa de venta ni el reagendamiento.
      - No ejecutado en SQL Server: requiere pruebas de los desarrolladores.
      - Mantiene Codigo, Categoria y otros nombres donde fue posible.
@@ -22,11 +22,11 @@
 USE master;
 GO
 
-IF DB_ID(N'Hospital_DB_Revision') IS NULL
-    CREATE DATABASE Hospital_DB_Revision;
+IF DB_ID(N'Hospital_DB') IS NULL
+    CREATE DATABASE Hospital_DB;
 GO
 
-USE Hospital_DB_Revision;
+USE Hospital_DB;
 GO
 
 /* =====================================================================
