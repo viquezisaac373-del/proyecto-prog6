@@ -26,3 +26,33 @@ body {
     width: 100px;
     height: 100px;
 }
+
+/* HU04 + HU03: códigos exactos de las tres propuestas de Danna.
+   Cambiar de tema solo modifica la presentación, no la lógica del sistema. */
+body {
+    --fondo: #FFFFFF; --superficie: #E7F1FB; --detalle: #9EC9F3;
+    --acento: #2F78C8; --texto: #173A5E;
+    background: var(--fondo); color: var(--texto);
+}
+body[data-tema="turquesa"] {
+    --fondo: #F3FBF8; --superficie: #CDEEEE; --detalle: #6FD0CC;
+    --acento: #1A9E9B; --texto: #0C4E4C;
+}
+body[data-tema="tecnologico"] {
+    --fondo: #F7F8FA; --superficie: #D9DEE6; --detalle: #8C96A6;
+    --acento: #394150; --texto: #0F172A;
+}
+/* Aplicar las variables a los componentes que ya creó Rodrigo. */
+.navbar.bg-light { background: var(--superficie) !important; border-color: var(--detalle) !important; }
+.navbar .navbar-brand, .navbar .nav-link, h1, h2, h3 { color: var(--texto) !important; }
+.btn-primary { background: var(--texto); border-color: var(--texto); color: #fff; }
+.btn-primary:hover { background: var(--acento); border-color: var(--acento); }
+.btn-outline-primary { color: var(--texto); border-color: var(--texto); }
+#servicios .border { background: var(--superficie); border-color: var(--detalle) !important; }
+footer { color: var(--texto) !important; border-color: var(--detalle) !important; }
+.selector-colores .btn[aria-pressed="true"] { border-color: var(--texto); color: var(--texto); background: var(--superficie); font-weight: 600; }
+.selector-colores .btn:focus-visible { outline: 2px solid var(--texto); outline-offset: 2px; }
+.muestra-color { display: inline-block; width: 12px; height: 12px; margin-right: 6px; border-radius: 50%; vertical-align: -1px; }
+.muestra-azul { background: #2F78C8; }
+.muestra-turquesa { background: #1A9E9B; }
+.muestra-tecnologico { background: #394150; }
