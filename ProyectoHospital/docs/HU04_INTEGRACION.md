@@ -30,3 +30,14 @@ No se añade otro proyecto ASP.NET.
 - Compilación y revisión QA de Danna pendientes antes de fusionar con `develop`.
 
 Fuente: `feature/hu04-interfaz/Hospital/HospitalWeb` (Rodrigo).
+
+## Demostración de paletas al cliente
+La portada incluye tres botones con las propuestas originales de Danna, que
+cambian únicamente los estilos en el navegador (sin conexión a BD):
+- Azul: `#FFFFFF`, `#E7F1FB`, `#9EC9F3`, `#2F78C8`, `#173A5E`.
+- Turquesa: `#F3FBF8`, `#CDEEEE`, `#6FD0CC`, `#1A9E9B`, `#0C4E4C`.
+- Tecnológico: `#F7F8FA`, `#D9DEE6`, `#8C96A6`, `#394150`, `#0F172A`.
+
+**La elección no se guarda**; es una demostración para decidir con el cliente.
+El logo, nombre y favicon actuales son provisionales y se reemplazarán
+cuando el cliente elija una propuesta, en el siguiente avance.
