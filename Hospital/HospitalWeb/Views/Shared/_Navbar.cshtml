@@ -1,0 +1,50 @@
+<nav class="navbar navbar-expand-sm navbar-light bg-light border-bottom mb-4">
+    <div class="container">
+        <a class="navbar-brand"
+           asp-controller="Home"
+           asp-action="Index">
+            Sistema Hospitalario
+        </a>
+
+        <button class="navbar-toggler"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#menuPrincipal">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="menuPrincipal">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link"
+                       asp-controller="Home"
+                       asp-action="Index">
+                        Inicio
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="#servicio-1">
+                        Citas
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="#servicio-2">
+                        Pacientes
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="#contacto">
+                        Contacto
+                    </a>
+                </li>
+            </ul>
+
+            <a class="btn btn-outline-primary" href="#">
+                Ingresar
+            </a>
+        </div>
+    </div>
+</nav>

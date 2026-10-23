@@ -1,0 +1,71 @@
+@model HomeViewModel
+
+@{
+    ViewData["Title"] = "Inicio";
+}
+
+<div class="container">
+    <section class="text-center py-4">
+        <img src="~/images/favicon.svg" 
+             alt="Logo de la web principal"
+             class="hospital-logo mb-3" />
+
+
+
+        <h1>Sistema Hospitalario</h1>
+
+        <p>
+            Bienvenido al sistema de administración del hospital.
+        </p>
+
+        <a class="btn btn-primary" href="#servicios">
+            Ver servicios
+        </a>
+    </section>
+
+    <section id="servicios">
+        <h2>Servicios principales</h2>
+
+        <p>
+            Seleccione una de las siguientes opciones:
+        </p>
+
+        <div class="row">
+            @foreach (ServicioHospitalario servicio in Model.Servicios)
+            {
+                <div class="col-md-4 mb-3"
+                     id="servicio-@servicio.Id">
+
+                    <div class="border rounded p-3">
+                        <h3 class="h5">
+                            @servicio.Nombre
+                        </h3>
+
+                        <p>
+                            @servicio.Descripcion
+                        </p>
+
+                        <button class="btn btn-secondary"
+                                disabled>
+                            Próximamente
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+
+    <hr />
+
+    <section id="contacto" class="mb-4">
+        <h2>Contacto</h2>
+
+        <p>
+            Para más información, comuníquese con la recepción.
+        </p>
+
+        <button class="btn btn-primary">
+            Contactar
+        </button>
+    </section>
+</div>
