@@ -46,8 +46,9 @@ body[data-tema="tecnologico"] {
 .navbar.bg-light { background: var(--superficie) !important; border-color: var(--detalle) !important; }
 .navbar .navbar-brand, .navbar .nav-link, h1, h2, h3 { color: var(--texto) !important; }
 .btn-primary { background: var(--texto); border-color: var(--texto); color: #fff; }
-.btn-primary:hover { background: var(--acento); border-color: var(--acento); }
+.btn-primary:hover { background: var(--texto); border-color: var(--texto); filter: brightness(.90); }
 .btn-outline-primary { color: var(--texto); border-color: var(--texto); }
+#servicios h2 { border-left: 4px solid var(--acento); padding-left: 12px; }
 #servicios .border { background: var(--superficie); border-color: var(--detalle) !important; }
 footer { color: var(--texto) !important; border-color: var(--detalle) !important; }
 .selector-colores .btn[aria-pressed="true"] { border-color: var(--texto); color: var(--texto); background: var(--superficie); font-weight: 600; }
