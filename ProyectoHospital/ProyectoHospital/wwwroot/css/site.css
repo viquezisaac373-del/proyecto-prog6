@@ -20,3 +20,9 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+/* HU04: tamaño del símbolo provisional en la página principal. */
+.hospital-logo {
+    width: 100px;
+    height: 100px;
+}
