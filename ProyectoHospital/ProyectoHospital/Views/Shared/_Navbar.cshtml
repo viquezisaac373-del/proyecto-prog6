@@ -1,0 +1,51 @@
+<nav class="navbar navbar-expand-sm navbar-light bg-light border-bottom mb-4">
+    <div class="container">
+        <a class="navbar-brand"
+           asp-controller="Home"
+           asp-action="Index">
+            Sistema Hospitalario
+        </a>
+
+        <button class="navbar-toggler"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#menuPrincipal"
+                aria-controls="menuPrincipal" aria-expanded="false" aria-label="Abrir menú de navegación">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="menuPrincipal">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link"
+                       asp-controller="Home"
+                       asp-action="Index">
+                        Inicio
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="servicio-1">
+                        Citas
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="servicio-2">
+                        Pacientes
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="contacto">
+                        Contacto
+                    </a>
+                </li>
+            </ul>
+
+            <span class="btn btn-outline-primary disabled" aria-disabled="true" title="Función prevista para próximos sprints">
+                Ingresar (próximamente)
+            </span>
+        </div>
+    </div>
+</nav>
