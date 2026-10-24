@@ -1,8 +1,80 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model HomeViewModel
+
+@{
+    ViewData["Title"] = "Inicio";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div>
+    <section class="text-center py-4">
+        <img src="~/images/favicon.svg" 
+             alt="Logo de la web principal"
+             class="hospital-logo mb-3" />
+
+
+
+        <h1>Sistema Hospitalario</h1>
+
+        <p>
+            Bienvenido al sistema de administración del hospital.
+        </p>
+
+        <a class="btn btn-primary" href="#servicios">
+            Ver servicios
+        </a>
+
+        @* Selector demostrativo; la identidad final se aprobará con el cliente. *@
+        <div class="selector-colores mt-4" role="group" aria-label="Probar paletas de colores">
+            <p class="small mb-2">Vista previa de colores propuestos:</p>
+            <button type="button" class="btn btn-sm btn-outline-secondary m-1" data-tema-opcion="azul" aria-pressed="true"><span class="muestra-color muestra-azul"></span>Azul</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary m-1" data-tema-opcion="turquesa" aria-pressed="false"><span class="muestra-color muestra-turquesa"></span>Turquesa</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary m-1" data-tema-opcion="tecnologico" aria-pressed="false"><span class="muestra-color muestra-tecnologico"></span>Tecnológico</button>
+            <p class="small mt-2 mb-0">Nombre, logo y favicon provisionales. La identidad final se definirá con el cliente.</p>
+        </div>
+    </section>
+
+    <section id="servicios">
+        <h2>Servicios principales</h2>
+
+        <p>
+            Seleccione una de las siguientes opciones:
+        </p>
+
+        <div class="row">
+            @foreach (ServicioHospitalario servicio in Model.Servicios)
+            {
+                <div class="col-md-4 mb-3"
+                     id="servicio-@servicio.Id">
+
+                    <div class="border rounded p-3">
+                        <h3 class="h5">
+                            @servicio.Nombre
+                        </h3>
+
+                        <p>
+                            @servicio.Descripcion
+                        </p>
+
+                        <button class="btn btn-secondary"
+                                disabled>
+                            Próximamente
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+
+    <hr />
+
+    <section id="contacto" class="mb-4">
+        <h2>Contacto</h2>
+
+        <p>
+            Para más información, comuníquese con la recepción.
+        </p>
+
+        <button type="button" class="btn btn-outline-secondary" disabled title="Funcionalidad prevista para próximos sprints">
+            Contactar (próximamente)
+        </button>
+    </section>
 </div>

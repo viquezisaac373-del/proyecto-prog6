@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ProyectoHospital.Models;
+using ProyectoHospital.Models.ViewModels;
 using System.Diagnostics;
 
 namespace ProyectoHospital.Controllers
@@ -15,7 +16,15 @@ namespace ProyectoHospital.Controllers
 
         public IActionResult Index()
         {
-            return View();
+            // Servicios informativos hasta que se implementen los módulos.
+            var modelo = new HomeViewModel();
+            modelo.Servicios.AddRange(new[]
+            {
+                new ServicioHospitalario { Id = 1, Nombre = "Citas médicas", Descripcion = "Permite consultar y programar citas." },
+                new ServicioHospitalario { Id = 2, Nombre = "Pacientes", Descripcion = "Permite consultar la información de los pacientes." },
+                new ServicioHospitalario { Id = 3, Nombre = "Medicamentos", Descripcion = "Permite consultar medicamentos e indicaciones." }
+            });
+            return View(modelo);
         }
 
         public IActionResult Privacy()

@@ -1,4 +1,8 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
-
-// Write your JavaScript code.
+// Selector de colores para presentar las opciones de HU03 al cliente.
+document.querySelectorAll("[data-tema-opcion]").forEach(boton => {
+    boton.addEventListener("click", () => {
+        document.body.dataset.tema = boton.dataset.temaOpcion;
+        document.querySelectorAll("[data-tema-opcion]").forEach(opcion =>
+            opcion.setAttribute("aria-pressed", String(opcion === boton)));
+    });
+});
