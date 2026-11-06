@@ -3,8 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Sistema Hospitalario</title>
-    @* Favicon provisional; se reemplaza cuando HU03 apruebe la identidad. *@
+    <title>@ViewData["Title"] - Hospinomenal</title>
     <link rel="icon" type="image/svg+xml" href="~/images/favicon.svg" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -12,13 +11,29 @@
 </head>
 <body>
     <header>
-        <partial name="_Navbar" />
+
+    <div class="container-fluid py-2 header-usuario">
+
+        <div class="container d-flex justify-content-end align-items-center gap-2">
+
+            <i class="bi bi-person-circle fs-5"></i>
+
+            <span class="fw-semibold">Maikol</span>
+
+            <span class="badge turquesa">Doctor</span>
+
+        </div>
+
+    </div>
+
+    <partial name="_Navbar" />
+</header>
     </header>
     <main role="main" class="container pb-3">
         @RenderBody()
     </main>
     <footer class="border-top mt-4 py-3 text-muted">
-        <div class="container">&copy; @DateTime.Now.Year - Sistema Hospitalario</div>
+        <div class="container"> @DateTime.Now.Year - Hospinomenal</div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

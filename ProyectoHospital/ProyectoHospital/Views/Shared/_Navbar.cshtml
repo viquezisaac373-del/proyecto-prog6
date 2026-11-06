@@ -3,7 +3,7 @@
         <a class="navbar-brand"
            asp-controller="Home"
            asp-action="Index">
-            Sistema Hospitalario
+            Hospinomenal
         </a>
 
         <button class="navbar-toggler"
@@ -37,15 +37,20 @@
                 </li>
 
                 <li class="nav-item">
+                    <a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="servicio-3">
+                        Medicamentos
+                    </a>
+                </li>
+
+                <li class="nav-item">
                     <a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="contacto">
                         Contacto
                     </a>
                 </li>
             </ul>
-
-            <span class="btn btn-outline-primary disabled" aria-disabled="true" title="Función prevista para próximos sprints">
-                Ingresar (próximamente)
-            </span>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">
+               Regresar
+            </a>
         </div>
     </div>
 </nav>

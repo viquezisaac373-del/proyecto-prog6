@@ -20,9 +20,9 @@ namespace ProyectoHospital.Controllers
             var modelo = new HomeViewModel();
             modelo.Servicios.AddRange(new[]
             {
-                new ServicioHospitalario { Id = 1, Nombre = "Citas médicas", Descripcion = "Permite consultar y programar citas." },
-                new ServicioHospitalario { Id = 2, Nombre = "Pacientes", Descripcion = "Permite consultar la información de los pacientes." },
-                new ServicioHospitalario { Id = 3, Nombre = "Medicamentos", Descripcion = "Permite consultar medicamentos e indicaciones." }
+                new ServicioHospitalario { Id = 1, Nombre = "Citas médicas", Descripcion = "Permite consultar y programar citas.", TipoServicio = tiposerviciohospitalario.Cita },
+                new ServicioHospitalario { Id = 2, Nombre = "Pacientes", Descripcion = "Permite consultar la información de los pacientes.", TipoServicio = tiposerviciohospitalario.Paciente },
+                new ServicioHospitalario { Id = 3, Nombre = "Medicamentos", Descripcion = "Permite consultar medicamentos e indicaciones.", TipoServicio = tiposerviciohospitalario.Medicamento }
             });
             return View(modelo);
         }

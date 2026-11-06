@@ -3,6 +3,9 @@
 @{
     ViewData["Title"] = "Inicio";
 }
+@section Scripts {
+    <script src="~/js/FormularioContacto.js" asp-append-version="true"></script>
+}
 
 <div>
     <section class="text-center py-4">
@@ -12,24 +15,15 @@
 
 
 
-        <h1>Sistema Hospitalario</h1>
+        <h1>Hospinomenal</h1>
 
         <p>
-            Bienvenido al sistema de administración del hospital.
+            "Innovacion y Cuidado en cada atencion"
         </p>
 
         <a class="btn btn-primary" href="#servicios">
             Ver servicios
         </a>
-
-        @* Selector demostrativo; la identidad final se aprobará con el cliente. *@
-        <div class="selector-colores mt-4" role="group" aria-label="Probar paletas de colores">
-            <p class="small mb-2">Vista previa de colores propuestos:</p>
-            <button type="button" class="btn btn-sm btn-outline-secondary m-1" data-tema-opcion="azul" aria-pressed="true"><span class="muestra-color muestra-azul"></span>Azul</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary m-1" data-tema-opcion="turquesa" aria-pressed="false"><span class="muestra-color muestra-turquesa"></span>Turquesa</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary m-1" data-tema-opcion="tecnologico" aria-pressed="false"><span class="muestra-color muestra-tecnologico"></span>Tecnológico</button>
-            <p class="small mt-2 mb-0">Nombre, logo y favicon provisionales. La identidad final se definirá con el cliente.</p>
-        </div>
     </section>
 
     <section id="servicios">
@@ -54,10 +48,30 @@
                             @servicio.Descripcion
                         </p>
 
-                        <button class="btn btn-secondary"
-                                disabled>
-                            Próximamente
-                        </button>
+                        @switch (servicio.TipoServicio)
+                        {
+                            case tiposerviciohospitalario.Cita:
+                                <a class="btn btn-outline-primary"
+                                asp-controller="Citas"
+                                asp-action="Citas">
+                                    Gestionar citas
+                                </a>
+                                break;
+                            case tiposerviciohospitalario.Paciente:
+                                <a class="btn btn-outline-primary"
+                                asp-controller="Pacientes"
+                                asp-action="Pacientes">
+                                    Gestionar Pacientes
+                                </a>
+                                break;
+                            case tiposerviciohospitalario.Medicamento:
+                                <a class="btn btn-outline-primary"
+                                asp-controller="Medicamentos"
+                                asp-action="Medicamentos">
+                                    Gestionar Medicamentos
+                                </a>
+                                break;
+                        }
                     </div>
                 </div>
             }
@@ -73,8 +87,50 @@
             Para más información, comuníquese con la recepción.
         </p>
 
-        <button type="button" class="btn btn-outline-secondary" disabled title="Funcionalidad prevista para próximos sprints">
-            Contactar (próximamente)
+        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalContacto">
+            Contactar
         </button>
     </section>
-</div>
+
+    <div class="modal" id="modalContacto" tabindex="-1" aria-labelledby="labelModalContacto" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="labelModalContacto">Formulario de contacto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="nombre" placeholder="Ingrese su nombre">
+                        </div>
+                        <div class="mb-3">
+                            <label for="apellido" class="form-label">Apellido</label>
+                            <input type="text" class="form-control" id="apellido" placeholder="Ingrese su apellido">
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Correo electrónico</label>
+                            <input type="email" class="form-control" id="email" placeholder="Ingrese su correo electrónico">
+                        </div>
+                        <div class="mb-3">
+                            <label for="mensaje" class="form-label">Mensaje</label>
+                            <textarea class="form-control" id="mensaje" rows="3" placeholder="Ingrese su mensaje"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class("btn btn-primary">Enviar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+
+
+
