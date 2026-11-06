@@ -1,18 +1,27 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ProyectoHospital.Repositories;
 
 namespace ProyectoHospital.Controllers
 {
-    // Controlador del módulo de gestión de pacientes.
-    // Recibe las solicitudes del usuario y determina
-    // qué vista debe presentar la aplicación.
+    // Controlador del mantenimiento de pacientes.
     public class PacientesController : Controller
     {
-        // GET: /Pacientes
-        // Muestra la pantalla principal del mantenimiento.
-        [HttpGet]
-        public IActionResult Index()
+        private readonly PacienteRepository _pacientes;
+
+        // ASP.NET Core proporciona el repositorio automáticamente.
+        public PacientesController(PacienteRepository pacientes)
         {
-            return View();
+            _pacientes = pacientes;
+        }
+
+        // GET: /Pacientes
+        // Obtiene los registros y los envía a la vista.
+        [HttpGet]
+        public async Task<IActionResult> Index()
+        {
+            var pacientes = await _pacientes.ListarAsync();
+
+            return View(pacientes);
         }
     }
 }
