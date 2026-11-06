@@ -9,7 +9,7 @@
    - Vistas, procedimientos y triggers separados y con indentacion legible.
    - Sin corchetes en identificadores; se conservan patrones como '%[^0-9]%'.
 
-   Incluye: 30 tablas, 42 FK, 62 CHECK, 47 DEFAULT, 21 indices,
+   Incluye: 30 tablas, 42 FK, 61 CHECK, 47 DEFAULT, 22 indices,
    6 vistas, 1 secuencia, 10 procedimientos almacenados y 11 triggers.
 
    SOLO ESQUEMA. No se crean usuarios ni se insertan datos.
@@ -280,7 +280,6 @@ CREATE TABLE dbo.Empleados (
     Correo NVARCHAR(150) NULL,
     Puesto NVARCHAR(80) NOT NULL,
     Especialidad NVARCHAR(100) NULL,
-    SalarioHora DECIMAL(10, 2) NOT NULL CONSTRAINT CK_Empleados_Salario CHECK ((SalarioHora>(0))),
     EsMedico BIT NOT NULL CONSTRAINT DF_Empleados_EsMedico DEFAULT ((0)),
     HoraEntrada TIME(0) NULL,
     HoraSalida TIME(0) NULL,
@@ -760,6 +759,15 @@ CREATE UNIQUE NONCLUSTERED INDEX UX_Citas_Medico_FechaHora
     ON dbo.Citas (EmpleadoId, Fecha_Hora)
     WHERE (Estado<>N'Cancelada');
 GO
+-- Evitar citas simultáneas del mismo paciente
+CREATE UNIQUE NONCLUSTERED INDEX UX_Citas_Paciente_FechaHora
+ON dbo.Citas (PacienteId, Fecha_Hora)
+WHERE Estado IN (
+    N'Programada',
+    N'EnEspera',
+    N'EnAtencion'
+);
+GO
 
 -- Indices de dbo.Clientes
 CREATE UNIQUE NONCLUSTERED INDEX UX_Clientes_Identificacion
@@ -861,8 +869,17 @@ SELECT
     CASE WHEN s.StockActual <= i.StockMinimo THEN 1 ELSE 0 END AS BajoMinimo
 FROM dbo.Inventario i
 CROSS APPLY (
-    SELECT ISNULL(SUM(CASE WHEN m.TipoMovimiento IN (N'EntradaCompra', N'AjusteEntrada') THEN m.Cantidad
-                           ELSE -m.Cantidad END), 0) AS StockActual
+    SELECT ISNULL(SUM(
+        CASE
+            WHEN m.TipoMovimiento IN (N'EntradaCompra', N'AjusteEntrada')
+                THEN m.Cantidad
+
+            WHEN m.TipoMovimiento IN (N'SalidaUsoMedico', N'SalidaVenta', N'AjusteSalida')
+                THEN -m.Cantidad
+
+            ELSE 0
+    END
+), 0) AS StockActual
     FROM dbo.MovimientosInventario m
     WHERE m.InventarioId = i.InventarioId
 ) s;
@@ -1259,9 +1276,14 @@ BEGIN
                 N'El motivo del reagendamiento es obligatorio.', 1;
 
         -- 2. Obtener y bloquear la cita
-        DECLARE @FechaHoraAnterior DATETIME2;
+        DECLARE @FechaHoraAnterior DATETIME2(0);
+        DECLARE @PacienteIdCita INT;
+        DECLARE @EstadoCita NVARCHAR(30);
 
-        SELECT @FechaHoraAnterior = Fecha_Hora
+        SELECT
+            @FechaHoraAnterior = Fecha_Hora,
+            @PacienteIdCita = PacienteId,
+            @EstadoCita = Estado
         FROM dbo.Citas WITH (UPDLOCK, HOLDLOCK)
         WHERE CitaId = @CitaId;
 
@@ -1272,6 +1294,19 @@ BEGIN
         IF @FechaHoraAnterior = @FechaHoraNueva
             THROW 51034,
                 N'La nueva fecha debe ser diferente de la anterior.', 1;
+
+                -- Impedir dos citas simultaneas del mismo paciente
+        IF @EstadoCita IN (N'Programada', N'EnEspera', N'EnAtencion')
+           AND EXISTS (
+               SELECT 1
+               FROM dbo.Citas WITH (UPDLOCK, HOLDLOCK)
+               WHERE PacienteId = @PacienteIdCita
+                 AND CitaId <> @CitaId
+                 AND Fecha_Hora = CONVERT(DATETIME2(0), @FechaHoraNueva)
+                 AND Estado IN (N'Programada', N'EnEspera', N'EnAtencion')
+           )
+            THROW 51080,
+                N'El paciente ya tiene otra cita activa en la fecha y hora solicitadas.', 1;
 
         -- 3. Actualizar la cita
         UPDATE dbo.Citas
@@ -1370,6 +1405,16 @@ BEGIN
 
         IF NOT EXISTS (SELECT 1 FROM dbo.Empleados WHERE EmpleadoId = @EmpleadoId AND Activo = 1 AND EsMedico = 1)
             THROW 50002, N'El medico no existe, esta inactivo o no es personal medico.', 1;
+        -- Impedir dos citas simultaneas del mismo paciente
+        IF EXISTS (
+            SELECT 1
+            FROM dbo.Citas WITH (UPDLOCK, HOLDLOCK)
+            WHERE PacienteId = @PacienteId
+              AND Fecha_Hora = @Fecha_Hora
+              AND Estado IN (N'Programada', N'EnEspera', N'EnAtencion')
+        )
+            THROW 50006,
+                N'El paciente ya tiene una cita activa en esa fecha y hora.', 1;
 
         -- Franjas del dia segun la jornada del medico (1 = lunes ... 7 = domingo)
         DECLARE @Dia DATE = CAST(@Fecha_Hora AS DATE);
