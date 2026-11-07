@@ -57,3 +57,10 @@ footer { color: var(--texto) !important; border-color: var(--detalle) !important
 .muestra-azul { background: #2F78C8; }
 .muestra-turquesa { background: #1A9E9B; }
 .muestra-tecnologico { background: #394150; }
+
+.login-card { background: var(--fondo); border: 1px solid var(--detalle); border-top: 4px solid var(--acento); }
+.login-logo { width: 64px; height: 64px; }
+.login-card .form-control { border-color: var(--detalle); }
+.login-card .form-control:focus { border-color: var(--acento); box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--acento) 25%, transparent); }
+.login-card .input-validation-error { border-color: #dc3545; }
+.login-page { margin-bottom: 0; background: var(--superficie); }
