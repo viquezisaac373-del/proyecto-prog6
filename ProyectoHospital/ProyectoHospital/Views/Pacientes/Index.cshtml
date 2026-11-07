@@ -1,21 +1,33 @@
-﻿@model List<ProyectoHospital.Models.Entities.Paciente>
+﻿
+@model List<ProyectoHospital.Models.Entities.Paciente>
 
 @{
     ViewData["Title"] = "Gestión de pacientes";
 }
 
-<div class="container mt-4">
+@* HU09 - T02, T03 y T04
+   Vista principal del mantenimiento de pacientes.
+   Permite consultar, registrar, editar y desactivar. *@
 
-    <h2>Gestión de pacientes</h2>
+<div class="container mt-4 mb-5">
 
-    <p class="text-muted">
-        Pacientes registrados en el Sistema Hospitalario.
-    </p>
+    <div class="mb-4">
 
-    @* HU09 - T03:
-   Acceso al formulario de registro de pacientes. *@
+        <h2>Gestión de pacientes</h2>
+
+        <p class="text-muted">
+            Consulte y administre los pacientes
+            registrados en el Sistema Hospitalario.
+        </p>
+
+    </div>
+
+    @* ====================================== *@
+    @* BOTÓN DE REGISTRO                      *@
+    @* ====================================== *@
 
     <div class="mb-3">
+
         <a asp-controller="Pacientes"
            asp-action="Create"
            class="btn btn-primary">
@@ -23,56 +35,192 @@
             Registrar nuevo paciente
 
         </a>
+
     </div>
 
-    @* Mostrar el mensaje después de registrar. *@
+    @* ====================================== *@
+    @* MENSAJES DEL SISTEMA                   *@
+    @* ====================================== *@
+
+    @* Mensaje después de registrar, editar o desactivar. *@
     @if (TempData["MensajeExito"] is string mensaje)
     {
-        <div class="alert alert-success" role="alert">
+        <div class="alert alert-success"
+             role="alert">
+
             @mensaje
+
         </div>
     }
 
-    <div class="table-responsive">
+    @* Mensaje cuando alguna operación no se pudo completar. *@
+    @if (TempData["MensajeError"] is string error)
+    {
+        <div class="alert alert-danger"
+             role="alert">
 
-        <table class="table table-striped table-hover">
+            @error
 
-            <thead>
-                <tr>
-                    <th>Identificación</th>
-                    <th>Nombre completo</th>
-                    <th>Fecha de nacimiento</th>
-                    <th>Teléfono</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
+        </div>
+    }
 
-            <tbody>
+    @* ====================================== *@
+    @* LISTADO DE PACIENTES                   *@
+    @* ====================================== *@
 
-                @foreach (var paciente in Model)
-                {
-                    <tr>
-                        <td>@paciente.NumeroIdentificacion</td>
+    <div class="card shadow-sm">
 
-                        <td>
-                            @paciente.Nombre @paciente.Apellidos
-                        </td>
+        <div class="card-header">
+            Pacientes registrados
+        </div>
 
-                        <td>
-                            @paciente.FechaNacimiento.ToString("dd/MM/yyyy")
-                        </td>
+        <div class="card-body">
 
-                        <td>@paciente.NumeroTelefono</td>
+            @if (Model == null || Model.Count == 0)
+            {
+                @* Mensaje cuando todavía no existen registros. *@
 
-                        <td>
-                            @(paciente.Activo ? "Activo" : "Inactivo")
-                        </td>
-                    </tr>
-                }
+                <div class="alert alert-info mb-0"
+                     role="status">
 
-            </tbody>
+                    No hay pacientes registrados actualmente.
 
-        </table>
+                </div>
+            }
+            else
+            {
+                @* Permite desplazamiento horizontal en móviles. *@
+
+                <div class="table-responsive">
+
+                    <table class="table table-striped table-hover align-middle">
+
+                        <thead>
+
+                            <tr>
+                                <th scope="col">
+                                    Identificación
+                                </th>
+
+                                <th scope="col">
+                                    Nombre completo
+                                </th>
+
+                                <th scope="col">
+                                    Fecha de nacimiento
+                                </th>
+
+                                <th scope="col">
+                                    Teléfono
+                                </th>
+
+                                <th scope="col">
+                                    Estado
+                                </th>
+
+                                <th scope="col">
+                                    Acciones
+                                </th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            @foreach (var paciente in Model)
+                            {
+                                <tr>
+
+                                    @* IDENTIFICACIÓN *@
+                                    <td>
+                                        @(paciente.NumeroIdentificacion ?? "Sin identificación")
+                                    </td>
+
+                                    @* NOMBRE COMPLETO *@
+                                    <td>
+                                        @paciente.Nombre @paciente.Apellidos
+                                    </td>
+
+                                    @* FECHA DE NACIMIENTO *@
+                                    <td>
+                                        @paciente.FechaNacimiento.ToString("dd/MM/yyyy")
+                                    </td>
+
+                                    @* TELÉFONO *@
+                                    <td>
+                                        @paciente.NumeroTelefono
+                                    </td>
+
+                                    @* ESTADO *@
+                                    <td>
+
+                                        @if (paciente.Activo)
+                                        {
+                                            <span class="badge bg-success">
+                                                Activo
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">
+                                                Inactivo
+                                            </span>
+                                        }
+
+                                    </td>
+
+                                    @* ACCIONES DEL MANTENIMIENTO *@
+                                    <td>
+
+                                        <div class="d-flex flex-wrap gap-2">
+
+                                            @* HU09 - T04
+                                               Abrir el formulario de edición. *@
+                                            <a asp-controller="Pacientes"
+                                               asp-action="Edit"
+                                               asp-route-id="@paciente.PacienteId"
+                                               class="btn btn-sm btn-outline-primary">
+
+                                                Editar
+
+                                            </a>
+
+                                            @* Desactivar únicamente
+                                               pacientes que todavía están activos. *@
+                                            @if (paciente.Activo)
+                                            {
+                                                <form asp-controller="Pacientes"
+                                                      asp-action="Desactivar"
+                                                      asp-route-id="@paciente.PacienteId"
+                                                      asp-antiforgery="true"
+                                                      method="post"
+                                                      onsubmit="return confirm('¿Está seguro de desactivar este paciente? El registro permanecerá en la base de datos.');">
+
+                                                    <button type="submit"
+                                                            class="btn btn-sm btn-outline-danger">
+
+                                                        Desactivar
+
+                                                    </button>
+
+                                                </form>
+                                            }
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+
+        </div>
 
     </div>
 

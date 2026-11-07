@@ -3,15 +3,20 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ProyectoHospital.Models.ViewModels
 {
-    // HU09 - T03
-    // Representa los datos del formulario de registro.
-    // Incluye las validaciones antes de enviar los datos a SQL Server.
+    // HU09 - T03 y T04
+    // Modelo utilizado para registrar y editar pacientes.
+    // Centraliza las validaciones del formulario MVC.
     public class PacienteFormViewModel : IValidatableObject
     {
+        // IDENTIFICADOR DEL PACIENTE
+        // 0 = Registro nuevo.
+        // Mayor que 0 = Edición de un paciente existente.
+        // Es un número entero, por lo que NO lleva StringLength.
+        public int PacienteId { get; set; }
+
         // IDENTIFICACIÓN
-        // Regla provisional: entre 9 y 25 dígitos.
-        // Rechaza identificaciones formadas únicamente por ceros.
-        // Los documentos extranjeros requieren una revisión posterior.
+        // Entre 9 y 25 dígitos, sin aceptar solamente ceros.
+        // Regla provisional para documentos numéricos.
         [Required(ErrorMessage = "La identificación es obligatoria.")]
         [StringLength(25)]
         [RegularExpression(
@@ -21,12 +26,16 @@ namespace ProyectoHospital.Models.ViewModels
 
         // NOMBRE
         [Required(ErrorMessage = "El nombre es obligatorio.")]
-        [StringLength(100, ErrorMessage = "El nombre no puede superar 100 caracteres.")]
+        [StringLength(
+            100,
+            ErrorMessage = "El nombre no puede superar 100 caracteres.")]
         public string Nombre { get; set; } = "";
 
         // APELLIDOS
         [Required(ErrorMessage = "Los apellidos son obligatorios.")]
-        [StringLength(130, ErrorMessage = "Los apellidos no pueden superar 130 caracteres.")]
+        [StringLength(
+            130,
+            ErrorMessage = "Los apellidos no pueden superar 130 caracteres.")]
         public string Apellidos { get; set; } = "";
 
         // FECHA DE NACIMIENTO
@@ -42,25 +51,26 @@ namespace ProyectoHospital.Models.ViewModels
         public string Genero { get; set; } = "";
 
         // TIPO DE SANGRE
+        // ND significa No determinado.
         [Required(ErrorMessage = "Seleccione un tipo de sangre.")]
         [RegularExpression(
             @"^(A\+|A-|B\+|B-|AB\+|AB-|O\+|O-|ND)$",
             ErrorMessage = "Seleccione un tipo de sangre válido.")]
         public string TipoSangre { get; set; } = "";
 
-        // TELÉFONO
-        // Acepta ocho dígitos nacionales o formato internacional
-        // con +, por ejemplo: +506 85102283.
+        // TELÉFONO PRINCIPAL
+        // Admite ocho dígitos nacionales o formato internacional.
+        // Ejemplos: 85102283 y +50685102283.
         [Required(ErrorMessage = "El teléfono es obligatorio.")]
         [StringLength(20)]
         [RegularExpression(
             @"^(?:[2-9][0-9]{7}|\+[1-9][0-9]{7,14}|\+[1-9][0-9]{0,2} [0-9]{7,12})$",
-            ErrorMessage = "Ingrese 8 dígitos nacionales o un número internacional, por ejemplo +506 85102283.")]
+            ErrorMessage = "Ingrese 8 dígitos nacionales o un número internacional válido.")]
         public string NumeroTelefono { get; set; } = "";
 
         // CORREO ELECTRÓNICO
-        // Comprueba un formato básico y una terminación de dominio
-        // de al menos dos letras, sin exigir que termine en .com.
+        // Comprueba la estructura básica del correo.
+        // Permite dominios como .com, .co, .cr, entre otros.
         [Required(ErrorMessage = "El correo es obligatorio.")]
         [StringLength(200)]
         [EmailAddress(ErrorMessage = "Ingrese un correo válido.")]
@@ -71,30 +81,34 @@ namespace ProyectoHospital.Models.ViewModels
 
         // DIRECCIÓN
         [Required(ErrorMessage = "La dirección es obligatoria.")]
-        [StringLength(250, ErrorMessage = "La dirección no puede superar 250 caracteres.")]
+        [StringLength(
+            250,
+            ErrorMessage = "La dirección no puede superar 250 caracteres.")]
         public string Direccion { get; set; } = "";
 
         // CONTACTO DE EMERGENCIA
         [Required(ErrorMessage = "El contacto de emergencia es obligatorio.")]
-        [StringLength(100)]
+        [StringLength(
+            100,
+            ErrorMessage = "El contacto no puede superar 100 caracteres.")]
         public string ContactoEmergencia { get; set; } = "";
 
         // TELÉFONO DE EMERGENCIA
-        // Aplicamos las mismas reglas que al teléfono principal.
+        // Utiliza las mismas reglas que el teléfono principal.
         [Required(ErrorMessage = "El teléfono de emergencia es obligatorio.")]
         [StringLength(20)]
         [RegularExpression(
             @"^(?:[2-9][0-9]{7}|\+[1-9][0-9]{7,14}|\+[1-9][0-9]{0,2} [0-9]{7,12})$",
-            ErrorMessage = "Ingrese un teléfono nacional válido o uno con código internacional.")]
+            ErrorMessage = "Ingrese un teléfono nacional o internacional válido.")]
         public string TelefonoEmergencia { get; set; } = "";
 
         // VALIDACIONES ADICIONALES
-        // IValidatableObject permite comprobar reglas que
-        // no dependen únicamente de un atributo.
+        // IValidatableObject permite aplicar reglas que
+        // requieren evaluar el valor de una propiedad.
         public IEnumerable<ValidationResult> Validate(
             ValidationContext validationContext)
         {
-            // Impedir fechas de nacimiento posteriores al día actual.
+            // La fecha de nacimiento no puede ser posterior a hoy.
             if (FechaNacimiento.HasValue &&
                 FechaNacimiento.Value.Date > DateTime.Today)
             {

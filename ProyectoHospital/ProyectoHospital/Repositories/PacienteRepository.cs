@@ -201,5 +201,120 @@ namespace ProyectoHospital.Repositories
                 .Replace("+", "")
                 .Replace(" ", "");
         }
+
+
+        // HU09 - T04
+        // Recupera la información de un paciente para editarla.
+        public async Task<PacienteFormViewModel?> ObtenerParaEdicionAsync(int id)
+        {
+            const string sql = @"
+                SELECT PacienteId, Numero_Identificacion, Nombre,
+                       Apellidos, Fecha_Nacimiento, Genero, TipoSangre,
+                       Numero_Telefono, Correo, Direccion,
+                       ContactoEmergencia, TelefonoEmergencia
+                FROM dbo.Pacientes
+                WHERE PacienteId = @Id;";
+
+            await using var conexion = new SqlConnection(_connectionString);
+            await conexion.OpenAsync();
+
+            await using var comando = new SqlCommand(sql, conexion);
+            comando.Parameters.Add("@Id", SqlDbType.Int).Value = id;
+
+            await using var lector = await comando.ExecuteReaderAsync();
+
+            if (!await lector.ReadAsync())
+                return null;
+
+            return new PacienteFormViewModel
+            {
+                PacienteId = lector.GetInt32(0),
+                NumeroIdentificacion = lector.IsDBNull(1) ? "" : lector.GetString(1),
+                Nombre = lector.GetString(2),
+                Apellidos = lector.GetString(3),
+                FechaNacimiento = lector.GetDateTime(4),
+                Genero = lector.GetString(5),
+                TipoSangre = lector.GetString(6),
+                NumeroTelefono = lector.GetString(7),
+                Correo = lector.GetString(8),
+                Direccion = lector.GetString(9),
+                ContactoEmergencia = lector.GetString(10),
+                TelefonoEmergencia = lector.GetString(11)
+            };
+        }
+
+        // Actualiza los datos administrativos sin modificar
+        // el identificador, la fecha de registro ni el estado.
+        public async Task<bool> ActualizarAsync(PacienteFormViewModel paciente)
+        {
+            if (!paciente.FechaNacimiento.HasValue)
+                throw new ArgumentException("La fecha de nacimiento es obligatoria.");
+
+            const string sql = @"
+                UPDATE dbo.Pacientes
+                SET Numero_Identificacion = @Identificacion,
+                    Nombre = @Nombre,
+                    Apellidos = @Apellidos,
+                    Fecha_Nacimiento = @Fecha,
+                    Genero = @Genero,
+                    TipoSangre = @Sangre,
+                    Numero_Telefono = @Telefono,
+                    Correo = @Correo,
+                    Direccion = @Direccion,
+                    ContactoEmergencia = @Contacto,
+                    TelefonoEmergencia = @TelefonoEmergencia
+                WHERE PacienteId = @Id;";
+
+            await using var conexion = new SqlConnection(_connectionString);
+            await conexion.OpenAsync();
+
+            await using var comando = new SqlCommand(sql, conexion);
+
+            // Utilizar parámetros evita concatenar datos del usuario
+            // directamente en las instrucciones SQL.
+            comando.Parameters.Add("@Id", SqlDbType.Int).Value = paciente.PacienteId;
+            comando.Parameters.Add("@Identificacion", SqlDbType.NVarChar, 25).Value =
+                paciente.NumeroIdentificacion.Trim();
+            comando.Parameters.Add("@Nombre", SqlDbType.NVarChar, 100).Value =
+                paciente.Nombre.Trim();
+            comando.Parameters.Add("@Apellidos", SqlDbType.NVarChar, 130).Value =
+                paciente.Apellidos.Trim();
+            comando.Parameters.Add("@Fecha", SqlDbType.Date).Value =
+                paciente.FechaNacimiento.Value.Date;
+            comando.Parameters.Add("@Genero", SqlDbType.NVarChar, 15).Value =
+                paciente.Genero.Trim();
+            comando.Parameters.Add("@Sangre", SqlDbType.NVarChar, 3).Value =
+                paciente.TipoSangre.Trim();
+            comando.Parameters.Add("@Telefono", SqlDbType.NVarChar, 20).Value =
+                NormalizarTelefono(paciente.NumeroTelefono);
+            comando.Parameters.Add("@Correo", SqlDbType.NVarChar, 200).Value =
+                paciente.Correo.Trim();
+            comando.Parameters.Add("@Direccion", SqlDbType.NVarChar, 250).Value =
+                paciente.Direccion.Trim();
+            comando.Parameters.Add("@Contacto", SqlDbType.NVarChar, 100).Value =
+                paciente.ContactoEmergencia.Trim();
+            comando.Parameters.Add("@TelefonoEmergencia", SqlDbType.NVarChar, 20).Value =
+                NormalizarTelefono(paciente.TelefonoEmergencia);
+
+            return await comando.ExecuteNonQueryAsync() > 0;
+        }
+
+        // Desactivación lógica: conserva al paciente y sus relaciones.
+        public async Task<bool> DesactivarAsync(int id)
+        {
+            const string sql = @"
+                UPDATE dbo.Pacientes
+                SET Activo = 0
+                WHERE PacienteId = @Id AND Activo = 1;";
+
+            await using var conexion = new SqlConnection(_connectionString);
+            await conexion.OpenAsync();
+
+            await using var comando = new SqlCommand(sql, conexion);
+            comando.Parameters.Add("@Id", SqlDbType.Int).Value = id;
+
+            return await comando.ExecuteNonQueryAsync() > 0;
+        }
+
     }
 }

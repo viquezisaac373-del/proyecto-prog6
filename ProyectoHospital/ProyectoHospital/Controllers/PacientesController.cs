@@ -109,5 +109,90 @@ namespace ProyectoHospital.Controllers
                 return View(modelo);
             }
         }
+
+        // GET: /Pacientes/Edit/3
+        // Recupera el paciente y reutiliza el formulario existente.
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            var modelo = await _pacientes.ObtenerParaEdicionAsync(id);
+
+            if (modelo == null)
+                return NotFound();
+
+            return View("Create", modelo);
+        }
+
+        // POST: /Pacientes/Edit
+        // Guarda los cambios realizados al paciente.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(PacienteFormViewModel modelo)
+        {
+            if (modelo.PacienteId <= 0)
+                return BadRequest();
+
+            if (!ModelState.IsValid)
+                return View("Create", modelo);
+
+            try
+            {
+                bool actualizado = await _pacientes.ActualizarAsync(modelo);
+
+                if (!actualizado)
+                    return NotFound();
+
+                TempData["MensajeExito"] =
+                    "Los datos del paciente se actualizaron correctamente.";
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (SqlException ex)
+                when (ex.Number == 2601 || ex.Number == 2627)
+            {
+                ModelState.AddModelError(
+                    nameof(modelo.NumeroIdentificacion),
+                    "Ya existe otro paciente con esta identificación.");
+
+                return View("Create", modelo);
+            }
+            catch (SqlException ex)
+            {
+                _logger.LogError(ex, "Error al actualizar el paciente.");
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    "No se pudieron guardar los cambios.");
+
+                return View("Create", modelo);
+            }
+        }
+
+        // POST: /Pacientes/Desactivar/3
+        // No elimina registros de la base de datos.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Desactivar(int id)
+        {
+            try
+            {
+                bool resultado = await _pacientes.DesactivarAsync(id);
+
+                TempData[resultado ? "MensajeExito" : "MensajeError"] =
+                    resultado
+                        ? "Paciente desactivado correctamente."
+                        : "El paciente no existe o ya estaba inactivo.";
+            }
+            catch (SqlException ex)
+            {
+                _logger.LogError(ex, "Error al desactivar el paciente.");
+
+                TempData["MensajeError"] =
+                    "No fue posible desactivar al paciente.";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
     }
 }
