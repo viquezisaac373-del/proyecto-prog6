@@ -16,14 +16,34 @@ namespace ProyectoHospital.Controllers
 
         public IActionResult Index()
         {
-            // Servicios informativos hasta que se implementen los módulos.
+            // HU06: Servicios del inicio y destino de navegación.
             var modelo = new HomeViewModel();
+
             modelo.Servicios.AddRange(new[]
             {
-                new ServicioHospitalario { Id = 1, Nombre = "Citas médicas", Descripcion = "Permite consultar y programar citas." },
-                new ServicioHospitalario { Id = 2, Nombre = "Pacientes", Descripcion = "Permite consultar la información de los pacientes." },
-                new ServicioHospitalario { Id = 3, Nombre = "Medicamentos", Descripcion = "Permite consultar medicamentos e indicaciones." }
+                new ServicioHospitalario
+                {
+                    Id = 1,
+                    Nombre = "Citas médicas",
+                    Descripcion = "Consulte la sección de citas del sistema hospitalario.",
+                    TipoServicio = TipoServicioHospitalario.Citas
+                },
+                new ServicioHospitalario
+                {
+                    Id = 2,
+                    Nombre = "Pacientes",
+                    Descripcion = "Consulte, registre, edite y desactive pacientes.",
+                    TipoServicio = TipoServicioHospitalario.Pacientes
+                },
+                new ServicioHospitalario
+                {
+                    Id = 3,
+                    Nombre = "Medicamentos",
+                    Descripcion = "Consulte la sección de medicamentos del sistema hospitalario.",
+                    TipoServicio = TipoServicioHospitalario.Medicamentos
+                }
             });
+
             return View(modelo);
         }
 
@@ -35,7 +55,10 @@ namespace ProyectoHospital.Controllers
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View(new ErrorViewModel
+            {
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+            });
         }
     }
 }
