@@ -1,9 +1,10 @@
 namespace ProyectoHospital.Models.ViewModels;
 
-// Servicio visible en la portada; aún no depende de la base de datos.
+// Representa una tarjeta de servicio en la página principal.
 public class ServicioHospitalario
 {
     public int Id { get; set; }
     public string Nombre { get; set; } = "";
     public string Descripcion { get; set; } = "";
+    public TipoServicioHospitalario TipoServicio { get; set; }
 }

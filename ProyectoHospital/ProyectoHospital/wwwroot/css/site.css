@@ -1,66 +1,145 @@
 html {
-  font-size: 14px;
+    font-size: 14px;
+    position: relative;
+    min-height: 100%;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+    html {
+        font-size: 16px;
+    }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
-}
-
+/* HU06: paleta turquesa seleccionada para Hospinomenal. */
 body {
-  margin-bottom: 60px;
+    --fondo: #F3FBF8;
+    --superficie: #CDEEEE;
+    --detalle: #6FD0CC;
+    --acento: #1A9E9B;
+    --texto: #0C4E4C;
+    margin-bottom: 60px;
+    background: var(--fondo);
+    color: var(--texto);
 }
 
-/* HU04: tamaño del símbolo provisional en la página principal. */
 .hospital-logo {
     width: 100px;
     height: 100px;
 }
 
-/* HU04 + HU03: códigos exactos de las tres propuestas de Danna.
-   Cambiar de tema solo modifica la presentación, no la lógica del sistema. */
-body {
-    --fondo: #FFFFFF; --superficie: #E7F1FB; --detalle: #9EC9F3;
-    --acento: #2F78C8; --texto: #173A5E;
-    background: var(--fondo); color: var(--texto);
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus,
+.form-select:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--acento);
 }
-body[data-tema="turquesa"] {
-    --fondo: #F3FBF8; --superficie: #CDEEEE; --detalle: #6FD0CC;
-    --acento: #1A9E9B; --texto: #0C4E4C;
-}
-body[data-tema="tecnologico"] {
-    --fondo: #F7F8FA; --superficie: #D9DEE6; --detalle: #8C96A6;
-    --acento: #394150; --texto: #0F172A;
-}
-/* Aplicar las variables a los componentes que ya creó Rodrigo. */
-.navbar.bg-light { background: var(--superficie) !important; border-color: var(--detalle) !important; }
-.navbar .navbar-brand, .navbar .nav-link, h1, h2, h3 { color: var(--texto) !important; }
-.btn-primary { background: var(--texto); border-color: var(--texto); color: #fff; }
-.btn-primary:hover { background: var(--texto); border-color: var(--texto); filter: brightness(.90); }
-.btn-outline-primary { color: var(--texto); border-color: var(--texto); }
-#servicios h2 { border-left: 4px solid var(--acento); padding-left: 12px; }
-#servicios .border { background: var(--superficie); border-color: var(--detalle) !important; }
-footer { color: var(--texto) !important; border-color: var(--detalle) !important; }
-.selector-colores .btn[aria-pressed="true"] { border-color: var(--texto); color: var(--texto); background: var(--superficie); font-weight: 600; }
-.selector-colores .btn:focus-visible { outline: 2px solid var(--texto); outline-offset: 2px; }
-.muestra-color { display: inline-block; width: 12px; height: 12px; margin-right: 6px; border-radius: 50%; vertical-align: -1px; }
-.muestra-azul { background: #2F78C8; }
-.muestra-turquesa { background: #1A9E9B; }
-.muestra-tecnologico { background: #394150; }
 
-.login-card { background: var(--fondo); border: 1px solid var(--detalle); border-top: 4px solid var(--acento); }
-.login-logo { width: 64px; height: 64px; }
-.login-card .form-control { border-color: var(--detalle); }
-.login-card .form-control:focus { border-color: var(--acento); box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--acento) 25%, transparent); }
-.login-card .input-validation-error { border-color: #dc3545; }
-.login-page { margin-bottom: 0; background: var(--superficie); }
+.navbar.bg-light {
+    background: var(--superficie) !important;
+    border-color: var(--detalle) !important;
+}
+
+.navbar .navbar-brand,
+.navbar .nav-link,
+h1, h2, h3 {
+    color: var(--texto) !important;
+}
+
+.btn-primary {
+    background: var(--texto);
+    border-color: var(--texto);
+    color: #fff;
+}
+
+    .btn-primary:hover,
+    .btn-primary:focus {
+        background: var(--texto);
+        border-color: var(--texto);
+        filter: brightness(.9);
+        color: #fff;
+    }
+
+.btn-outline-primary {
+    color: var(--texto);
+    border-color: var(--texto);
+}
+
+    .btn-outline-primary:hover {
+        background: var(--texto);
+        color: #fff;
+        border-color: var(--texto);
+    }
+
+#servicios h2 {
+    border-left: 4px solid var(--acento);
+    padding-left: 12px;
+}
+
+#servicios .border {
+    background: var(--superficie);
+    border-color: var(--detalle) !important;
+}
+
+footer {
+    color: var(--texto) !important;
+    border-color: var(--detalle) !important;
+}
+
+.navbar-nav .nav-link {
+    position: relative;
+    text-decoration: none;
+    padding-bottom: 8px;
+}
+
+    .navbar-nav .nav-link::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 0;
+        height: 3px;
+        background-color: var(--acento);
+        transition: width .25s ease;
+    }
+
+    .navbar-nav .nav-link:hover::after,
+    .navbar-nav .nav-link:focus-visible::after {
+        width: 100%;
+    }
+
+@media (prefers-reduced-motion: reduce) {
+    .navbar-nav .nav-link::after {
+        transition: none;
+    }
+}
+
+.login-card {
+    background: var(--fondo);
+    border: 1px solid var(--detalle);
+    border-top: 4px solid var(--acento);
+}
+
+.login-logo {
+    width: 64px;
+    height: 64px;
+}
+
+.login-card .form-control {
+    border-color: var(--detalle);
+}
+
+    .login-card .form-control:focus {
+        border-color: var(--acento);
+        box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--acento) 25%, transparent);
+    }
+
+.login-card .input-validation-error {
+    border-color: #dc3545;
+}
+
+.login-page {
+    margin-bottom: 0;
+    background: var(--superficie);
+}
