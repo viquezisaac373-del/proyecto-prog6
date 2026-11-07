@@ -12,6 +12,27 @@
         Pacientes registrados en el Sistema Hospitalario.
     </p>
 
+    @* HU09 - T03:
+   Acceso al formulario de registro de pacientes. *@
+
+    <div class="mb-3">
+        <a asp-controller="Pacientes"
+           asp-action="Create"
+           class="btn btn-primary">
+
+            Registrar nuevo paciente
+
+        </a>
+    </div>
+
+    @* Mostrar el mensaje después de registrar. *@
+    @if (TempData["MensajeExito"] is string mensaje)
+    {
+        <div class="alert alert-success" role="alert">
+            @mensaje
+        </div>
+    }
+
     <div class="table-responsive">
 
         <table class="table table-striped table-hover">
