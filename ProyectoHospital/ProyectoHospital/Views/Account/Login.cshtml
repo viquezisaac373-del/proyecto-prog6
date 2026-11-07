@@ -15,12 +15,7 @@
                     <p class="text-muted mb-0">Ingrese sus credenciales para acceder al Sistema Hospitalario.</p>
                 </div>
 
-                @if (ViewData["Info"] is string info)
-                {
-                    <div class="alert alert-info small" role="status">@info</div>
-                }
-
-                <form asp-action="Login" method="post" novalidate>
+                <form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" novalidate>
                     @Html.AntiForgeryToken()
 
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger small" role="alert"></div>
