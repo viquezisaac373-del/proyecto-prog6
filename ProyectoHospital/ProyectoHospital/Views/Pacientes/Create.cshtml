@@ -1,0 +1,703 @@
+﻿@model ProyectoHospital.Models.ViewModels.PacienteFormViewModel
+
+@{
+    // HU09 - T03 y T04
+    // Reutilizamos una misma vista para registrar y editar pacientes.
+    // PacienteId = 0: registro nuevo.
+    // PacienteId > 0: edición de un paciente existente.
+
+    bool esEdicion = Model.PacienteId > 0;
+    string accion = esEdicion ? "Edit" : "Create";
+
+    ViewData["Title"] = esEdicion
+        ? "Editar paciente"
+        : "Registrar paciente";
+}
+
+@* Biblioteca para los teléfonos internacionales. *@
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.8/dist/css/intlTelInput.min.css" />
+
+<style>
+    /* Los selectores telefónicos deben ocupar todo el ancho. */
+    .iti {
+        width: 100%;
+    }
+
+        .iti .form-control {
+            width: 100%;
+        }
+
+    /* Ajustar el selector de países a pantallas pequeñas. */
+    .iti__country-list {
+        max-width: min(350px, 90vw);
+    }
+
+    /* Evitar que el contenido se salga de su columna. */
+    .form-control,
+    .form-select {
+        max-width: 100%;
+    }
+</style>
+
+<div class="container mt-4 mb-5">
+
+    @* ENCABEZADO DINÁMICO *@
+    <div class="mb-4">
+
+        <h2>
+            @(esEdicion ? "Editar paciente" : "Registrar paciente")
+        </h2>
+
+        <p class="text-muted">
+            @if (esEdicion)
+            {
+                <text>
+                    Modifique la información del paciente y guarde
+                    los cambios correspondientes.
+                </text>
+            }
+            else
+            {
+                <text>
+                    Complete la información para registrar
+                    un nuevo paciente en el Sistema Hospitalario.
+                </text>
+            }
+        </p>
+
+    </div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body p-4">
+
+            @* El formulario selecciona automáticamente la acción.
+               Create: registrar.
+               Edit: actualizar. *@
+
+            <form id="formRegistroPaciente"
+                  asp-controller="Pacientes"
+                  asp-action="@accion"
+                  asp-antiforgery="true"
+                  method="post">
+
+                @* En edición conservamos el identificador.
+                   No se permite cambiarlo desde el formulario. *@
+                <input asp-for="PacienteId"
+                       type="hidden" />
+
+                @* Errores generales del controlador. *@
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3"></div>
+
+                @* Error relacionado con la carga de los teléfonos. *@
+                <div id="mensajeTelefonos"
+                     class="alert alert-warning d-none"
+                     role="alert"></div>
+
+                @* ====================================== *@
+                @* INFORMACIÓN PERSONAL                  *@
+                @* ====================================== *@
+
+                <h5 class="mb-3">
+                    Información personal
+                </h5>
+
+                <div class="row g-3">
+
+                    @* IDENTIFICACIÓN *@
+                    <div class="col-md-6">
+
+                        <label asp-for="NumeroIdentificacion"
+                               class="form-label">
+                            Identificación
+                        </label>
+
+                        <input asp-for="NumeroIdentificacion"
+                               class="form-control"
+                               inputmode="numeric"
+                               maxlength="25" />
+
+                        <span asp-validation-for="NumeroIdentificacion"
+                              class="text-danger"></span>
+
+                    </div>
+
+                    @* FECHA DE NACIMIENTO *@
+                    <div class="col-md-6">
+
+                        <label asp-for="FechaNacimiento"
+                               class="form-label">
+                            Fecha de nacimiento
+                        </label>
+
+                        @* No permitir fechas futuras desde el navegador.
+                           El ViewModel y SQL Server también las validan. *@
+                        <input asp-for="FechaNacimiento"
+                               type="date"
+                               max="@DateTime.Today.ToString("yyyy-MM-dd")"
+                               class="form-control" />
+
+                        <span asp-validation-for="FechaNacimiento"
+                              class="text-danger"></span>
+
+                    </div>
+
+                    @* NOMBRE *@
+                    <div class="col-md-6">
+
+                        <label asp-for="Nombre"
+                               class="form-label">
+                            Nombre
+                        </label>
+
+                        <input asp-for="Nombre"
+                               class="form-control"
+                               maxlength="100" />
+
+                        <span asp-validation-for="Nombre"
+                              class="text-danger"></span>
+
+                    </div>
+
+                    @* APELLIDOS *@
+                    <div class="col-md-6">
+
+                        <label asp-for="Apellidos"
+                               class="form-label">
+                            Apellidos
+                        </label>
+
+                        <input asp-for="Apellidos"
+                               class="form-control"
+                               maxlength="130" />
+
+                        <span asp-validation-for="Apellidos"
+                              class="text-danger"></span>
+
+                    </div>
+
+                    @* GÉNERO *@
+                    <div class="col-md-6">
+
+                        <label asp-for="Genero"
+                               class="form-label">
+                            Género
+                        </label>
+
+                        <select asp-for="Genero"
+                                class="form-select">
+
+                            <option value="">
+                                Seleccione...
+                            </option>
+
+                            <option value="Masculino">
+                                Masculino
+                            </option>
+
+                            <option value="Femenino">
+                                Femenino
+                            </option>
+
+                            <option value="Otro">
+                                Otro
+                            </option>
+
+                        </select>
+
+                        <span asp-validation-for="Genero"
+                              class="text-danger"></span>
+
+                    </div>
+
+                    @* TIPO DE SANGRE *@
+                    <div class="col-md-6">
+
+                        <label asp-for="TipoSangre"
+                               class="form-label">
+                            Tipo de sangre
+                        </label>
+
+                        <select asp-for="TipoSangre"
+                                class="form-select">
+
+                            <option value="">
+                                Seleccione...
+                            </option>
+
+                            <option value="ND">
+                                No determinado
+                            </option>
+
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+
+                        </select>
+
+                        <span asp-validation-for="TipoSangre"
+                              class="text-danger"></span>
+
+                    </div>
+
+                </div>
+
+                <hr class="my-4" />
+
+                @* ====================================== *@
+                @* INFORMACIÓN DE CONTACTO               *@
+                @* ====================================== *@
+
+                <h5 class="mb-3">
+                    Información de contacto
+                </h5>
+
+                <div class="row g-3">
+
+                    @* TELÉFONO PRINCIPAL *@
+                    <div class="col-md-6">
+
+                        <label for="telefonoVisible"
+                               class="form-label">
+                            Teléfono
+                        </label>
+
+                        @* Campo visible con bandera y código de país.
+                           No utiliza name para evitar enviar
+                           un segundo valor al controlador. *@
+                        <input id="telefonoVisible"
+                               type="tel"
+                               class="form-control"
+                               autocomplete="tel"
+                               inputmode="tel"
+                               required
+                               aria-describedby="errorTelefono" />
+
+                        @* Campo real enviado al ViewModel.
+                           También contiene el valor existente al editar. *@
+                        <input asp-for="NumeroTelefono"
+                               type="hidden" />
+
+                        <div id="errorTelefono"
+                             class="text-danger small mt-1"
+                             aria-live="polite"></div>
+
+                        <span asp-validation-for="NumeroTelefono"
+                              class="text-danger"></span>
+
+                    </div>
+
+                    @* CORREO *@
+                    <div class="col-md-6">
+
+                        <label asp-for="Correo"
+                               class="form-label">
+                            Correo electrónico
+                        </label>
+
+                        <input asp-for="Correo"
+                               type="email"
+                               class="form-control"
+                               maxlength="200" />
+
+                        <span asp-validation-for="Correo"
+                              class="text-danger"></span>
+
+                    </div>
+
+                    @* DIRECCIÓN *@
+                    <div class="col-12">
+
+                        <label asp-for="Direccion"
+                               class="form-label">
+                            Dirección
+                        </label>
+
+                        <textarea asp-for="Direccion"
+                                  class="form-control"
+                                  rows="2"
+                                  maxlength="250"></textarea>
+
+                        <span asp-validation-for="Direccion"
+                              class="text-danger"></span>
+
+                    </div>
+
+                </div>
+
+                <hr class="my-4" />
+
+                @* ====================================== *@
+                @* CONTACTO DE EMERGENCIA                 *@
+                @* ====================================== *@
+
+                <h5 class="mb-3">
+                    Contacto de emergencia
+                </h5>
+
+                <div class="row g-3">
+
+                    @* NOMBRE DEL CONTACTO *@
+                    <div class="col-md-6">
+
+                        <label asp-for="ContactoEmergencia"
+                               class="form-label">
+                            Nombre del contacto
+                        </label>
+
+                        <input asp-for="ContactoEmergencia"
+                               class="form-control"
+                               maxlength="100" />
+
+                        <span asp-validation-for="ContactoEmergencia"
+                              class="text-danger"></span>
+
+                    </div>
+
+                    @* TELÉFONO DE EMERGENCIA *@
+                    <div class="col-md-6">
+
+                        <label for="emergenciaVisible"
+                               class="form-label">
+                            Teléfono de emergencia
+                        </label>
+
+                        <input id="emergenciaVisible"
+                               type="tel"
+                               class="form-control"
+                               inputmode="tel"
+                               required
+                               aria-describedby="errorEmergencia" />
+
+                        @* Valor enviado al servidor. *@
+                        <input asp-for="TelefonoEmergencia"
+                               type="hidden" />
+
+                        <div id="errorEmergencia"
+                             class="text-danger small mt-1"
+                             aria-live="polite"></div>
+
+                        <span asp-validation-for="TelefonoEmergencia"
+                              class="text-danger"></span>
+
+                    </div>
+
+                </div>
+
+                <hr class="my-4" />
+
+                @* ====================================== *@
+                @* ACCIONES                               *@
+                @* ====================================== *@
+
+                <div class="d-flex flex-wrap gap-2 justify-content-end">
+
+                    <a asp-controller="Pacientes"
+                       asp-action="Index"
+                       class="btn btn-outline-secondary">
+                        Cancelar
+                    </a>
+
+                    <button id="btnRegistrar"
+                            type="submit"
+                            class="btn btn-primary"
+                            disabled>
+
+                        @(esEdicion ? "Guardar cambios" : "Registrar paciente")
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+
+    @* Validaciones de ASP.NET Core MVC. *@
+    <partial name="_ValidationScriptsPartial" />
+
+    @* Biblioteca internacional para los teléfonos. *@
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.8/dist/js/intlTelInput.min.js"></script>
+
+    <script>
+        // HU09 - T03 y T04
+        // Funcionamiento compartido para registro y edición.
+
+        const formulario = document.getElementById(
+            "formRegistroPaciente");
+
+        const telefonoVisible = document.getElementById(
+            "telefonoVisible");
+
+        const emergenciaVisible = document.getElementById(
+            "emergenciaVisible");
+
+        // Campos ocultos que se envían al servidor.
+        const telefonoCompleto = document.getElementById(
+            "NumeroTelefono");
+
+        const emergenciaCompleto = document.getElementById(
+            "TelefonoEmergencia");
+
+        const errorTelefono = document.getElementById(
+            "errorTelefono");
+
+        const errorEmergencia = document.getElementById(
+            "errorEmergencia");
+
+        const botonRegistrar = document.getElementById(
+            "btnRegistrar");
+
+        const mensajeTelefonos = document.getElementById(
+            "mensajeTelefonos");
+
+        let telefonosListos = false;
+
+        // Mostrar mensajes cuando no se pueda cargar
+        // la biblioteca de validación.
+        function mostrarErrorGeneral(mensaje) {
+            mensajeTelefonos.textContent = mensaje;
+            mensajeTelefonos.classList.remove("d-none");
+        }
+
+        // Inicializar el selector de países.
+        function inicializarTelefono(campo) {
+
+            return window.intlTelInput(campo, {
+
+                // País inicial: Costa Rica.
+                initialCountry: "cr",
+
+                // Países destacados.
+                countryOrder: [
+                    "cr", "ni", "pa", "us", "mx", "co", "es"
+                ],
+
+                // Mostrar bandera y prefijo.
+                separateDialCode: true,
+                showFlags: true,
+
+                // Activar búsqueda de países.
+                countrySearch: true,
+
+                // Restringir caracteres de entrada.
+                strictMode: true,
+
+                // Cargar funciones de formato y validación.
+                loadUtils: () => import(
+                    "https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.8/dist/js/utils.js"
+                )
+            });
+        }
+
+        // Convertir un número almacenado al formato
+        // que puede reconocer el selector internacional.
+        //
+        // DB4 actualmente almacena números sin el signo +.
+        //
+        // 50685102283 -> +50685102283
+        // 85102283    -> +50685102283
+        //
+        // Los números antiguos ambiguos o inválidos
+        // deberán corregirse manualmente al editar.
+        function prepararNumero(valor) {
+
+            if (!valor) {
+                return "";
+            }
+
+            const limpio = valor.replace(/[^\d+]/g, "");
+
+            // Ya tiene código internacional.
+            if (limpio.startsWith("+")) {
+                return limpio;
+            }
+
+            // Número nacional de ocho dígitos:
+            // interpretación provisional para Costa Rica.
+            if (/^\d{8}$/.test(limpio)) {
+                return "+506" + limpio;
+            }
+
+            // Los demás valores se interpretan como
+            // números internacionales sin el signo +.
+            return "+" + limpio;
+        }
+
+        // Limpiar mensajes al modificar un campo.
+        function limpiarError(campo, contenedorError) {
+
+            campo.setCustomValidity("");
+            contenedorError.textContent = "";
+        }
+
+        // Validar un teléfono según el país seleccionado.
+        function validarTelefono(campo, selector, contenedorError) {
+
+            limpiarError(campo, contenedorError);
+
+            if (!campo.value.trim() || !selector.isValidNumber()) {
+
+                const mensaje =
+                    "Ingrese un número válido para el país seleccionado.";
+
+                campo.setCustomValidity(mensaje);
+                contenedorError.textContent = mensaje;
+                campo.reportValidity();
+
+                return false;
+            }
+
+            return true;
+        }
+
+        // Inicializar los campos telefónicos.
+        if (!window.intlTelInput) {
+
+            mostrarErrorGeneral(
+                "No se pudo cargar el selector de países. Revise la conexión a Internet."
+            );
+
+        } else {
+
+            const selectorTelefono = inicializarTelefono(
+                telefonoVisible);
+
+            const selectorEmergencia = inicializarTelefono(
+                emergenciaVisible);
+
+            // Esperar a que la biblioteca esté completamente lista.
+            Promise.all([
+                selectorTelefono.promise,
+                selectorEmergencia.promise
+            ])
+            .then(() => {
+
+                // HU09 - T04
+                // Si estamos editando, cargar los teléfonos
+                // registrados anteriormente en SQL Server.
+                if (telefonoCompleto.value) {
+
+                    selectorTelefono.setNumber(
+                        prepararNumero(telefonoCompleto.value)
+                    );
+                }
+
+                if (emergenciaCompleto.value) {
+
+                    selectorEmergencia.setNumber(
+                        prepararNumero(emergenciaCompleto.value)
+                    );
+                }
+
+                telefonosListos = true;
+
+                // Habilitar registro o edición.
+                botonRegistrar.disabled = false;
+
+            })
+            .catch(() => {
+
+                mostrarErrorGeneral(
+                    "No fue posible cargar la validación telefónica. Recargue la página."
+                );
+
+            });
+
+            // Quitar los errores cuando se modifique el número.
+            telefonoVisible.addEventListener("input", () => {
+                limpiarError(telefonoVisible, errorTelefono);
+            });
+
+            emergenciaVisible.addEventListener("input", () => {
+                limpiarError(emergenciaVisible, errorEmergencia);
+            });
+
+            telefonoVisible.addEventListener("countrychange", () => {
+                limpiarError(telefonoVisible, errorTelefono);
+            });
+
+            emergenciaVisible.addEventListener("countrychange", () => {
+                limpiarError(emergenciaVisible, errorEmergencia);
+            });
+
+            // Validar los teléfonos antes de enviar el formulario.
+            formulario.addEventListener("submit", function (evento) {
+
+                if (!telefonosListos) {
+
+                    evento.preventDefault();
+                    evento.stopImmediatePropagation();
+
+                    mostrarErrorGeneral(
+                        "La validación telefónica todavía no está disponible."
+                    );
+
+                    return;
+                }
+
+                const principalValido = validarTelefono(
+                    telefonoVisible,
+                    selectorTelefono,
+                    errorTelefono
+                );
+
+                if (!principalValido) {
+
+                    evento.preventDefault();
+                    evento.stopImmediatePropagation();
+
+                    telefonoVisible.focus();
+
+                    return;
+                }
+
+                const emergenciaValido = validarTelefono(
+                    emergenciaVisible,
+                    selectorEmergencia,
+                    errorEmergencia
+                );
+
+                if (!emergenciaValido) {
+
+                    evento.preventDefault();
+                    evento.stopImmediatePropagation();
+
+                    emergenciaVisible.focus();
+
+                    return;
+                }
+
+                // Enviar al ViewModel los números completos
+                // con el prefijo internacional.
+                //
+                // Ejemplo: +50685102283
+                //
+                // El repositorio actual los normalizará
+                // para el esquema provisional de SQL Server.
+                telefonoCompleto.value =
+                    selectorTelefono.getNumber();
+
+                emergenciaCompleto.value =
+                    selectorEmergencia.getNumber();
+
+            }, true);
+        }
+    </script>
+}
