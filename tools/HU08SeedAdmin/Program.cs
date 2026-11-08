@@ -13,7 +13,7 @@ const string usuario = "admin";
 const string rol = "Administrador";
 
 var configuracion = new ConfigurationBuilder()
-    .AddUserSecrets(userSecretsId, optional: true)
+    .AddUserSecrets(userSecretsId)
     .AddEnvironmentVariables()
     .Build();
 
