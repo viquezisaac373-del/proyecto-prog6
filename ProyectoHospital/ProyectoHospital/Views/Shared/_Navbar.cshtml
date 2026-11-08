@@ -57,12 +57,21 @@
                 </li>
             </ul>
 
-            @* No simular una sesión mientras HU de autenticación esté pendiente. *@
-            <span class="btn btn-outline-primary disabled"
-                  aria-disabled="true"
-                  title="Función prevista para próximos sprints">
-                Ingresar (próximamente)
-            </span>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="d-flex align-items-center gap-2">
+                    <span class="navbar-text">@User.Identity.Name</span>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                        <button type="submit" class="btn btn-outline-primary">Cerrar sesión</button>
+                    </form>
+                </div>
+            }
+            else
+            {
+                <a class="btn btn-outline-primary" asp-controller="Account" asp-action="Login">
+                    Ingresar
+                </a>
+            }
         </div>
     </div>
 </nav>

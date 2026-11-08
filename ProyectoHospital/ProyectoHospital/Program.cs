@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Configuración de MVC.
@@ -8,6 +11,26 @@ builder.Services.AddControllersWithViews();
 // permitir su uso mediante inyección de dependencias.
 builder.Services.AddScoped<
     ProyectoHospital.Repositories.PacienteRepository>();
+
+builder.Services.AddScoped<
+    ProyectoHospital.Repositories.UsuarioRepository>();
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.LogoutPath = "/Account/Logout";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+        options.SlidingExpiration = true;
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
 
 // Construir la aplicación después de registrar los servicios.
 var app = builder.Build();
@@ -24,6 +47,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 
