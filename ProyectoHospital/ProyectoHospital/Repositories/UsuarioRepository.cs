@@ -22,7 +22,7 @@ namespace ProyectoHospital.Repositories
         public async Task<UsuarioRecord?> ObtenerPorUsuarioAsync(string usuario)
         {
             const string sql = @"
-                SELECT UsuarioId, Usuario, PasswordHash, PasswordSalt, Activo,
+                SELECT UsuarioId, Usuario, PasswordHash, PasswordSalt, PasswordHashIdentity, Activo,
                        CAST(CASE WHEN BloqueadoHasta > SYSDATETIME() THEN 1 ELSE 0 END AS BIT) AS Bloqueado
                 FROM dbo.Usuarios
                 WHERE Usuario = @Usuario;";
@@ -42,11 +42,36 @@ namespace ProyectoHospital.Repositories
             {
                 UsuarioId = lector.GetInt32(0),
                 NombreUsuario = lector.GetString(1),
-                PasswordHash = (byte[])lector["PasswordHash"],
-                PasswordSalt = (byte[])lector["PasswordSalt"],
-                Activo = lector.GetBoolean(4),
-                Bloqueado = lector.GetBoolean(5)
+                PasswordHash = lector.IsDBNull(2) ? null : (byte[])lector.GetValue(2),
+                PasswordSalt = lector.IsDBNull(3) ? null : (byte[])lector.GetValue(3),
+                PasswordHashIdentity = lector.IsDBNull(4) ? null : lector.GetString(4),
+                Activo = lector.GetBoolean(5),
+                Bloqueado = lector.GetBoolean(6)
             };
+        }
+
+
+        // Migra una contraseña validada desde SHA-512 a PasswordHasher (Identity V3).
+        // También permite rehash cuando el algoritmo eleva el costo de trabajo.
+        public async Task GuardarPasswordIdentityAsync(int usuarioId, string passwordHashIdentity)
+        {
+            const string sql = @"
+                UPDATE dbo.Usuarios
+                SET PasswordHashIdentity = @PasswordHashIdentity,
+                    PasswordHash = NULL,
+                    PasswordSalt = NULL,
+                    UpdatedAt = SYSUTCDATETIME()
+                WHERE UsuarioId = @UsuarioId;";
+
+            await using var conexion = new SqlConnection(_connectionString);
+            await conexion.OpenAsync();
+
+            await using var comando = new SqlCommand(sql, conexion);
+            comando.Parameters.Add("@UsuarioId", SqlDbType.Int).Value = usuarioId;
+            comando.Parameters.Add("@PasswordHashIdentity", SqlDbType.NVarChar, 256).Value = passwordHashIdentity;
+
+            if (await comando.ExecuteNonQueryAsync() != 1)
+                throw new InvalidOperationException("No fue posible actualizar el hash del usuario.");
         }
 
         public async Task<List<string>> ObtenerRolesAsync(int usuarioId)

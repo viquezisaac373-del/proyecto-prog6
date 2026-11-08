@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Identity;
+using ProyectoHospital.Models.Entities;
 using ProyectoHospital.Models.ViewModels;
 using ProyectoHospital.Repositories;
 using ProyectoHospital.Services;
@@ -15,11 +17,16 @@ namespace ProyectoHospital.Controllers
         private const string MensajeBloqueo = "La cuenta está bloqueada temporalmente por intentos fallidos. Intente de nuevo más tarde.";
 
         private readonly UsuarioRepository _usuarios;
+        private readonly IPasswordHasher<UsuarioRecord> _passwordHasher;
         private readonly ILogger<AccountController> _logger;
 
-        public AccountController(UsuarioRepository usuarios, ILogger<AccountController> logger)
+        public AccountController(
+            UsuarioRepository usuarios,
+            IPasswordHasher<UsuarioRecord> passwordHasher,
+            ILogger<AccountController> logger)
         {
             _usuarios = usuarios;
+            _passwordHasher = passwordHasher;
             _logger = logger;
         }
 
@@ -72,10 +79,24 @@ namespace ProyectoHospital.Controllers
                     return ErrorLogin(model, MensajeBloqueo);
                 }
 
-                bool passwordCorrecta = PasswordVerifier.VerifySha512(
-                    usuario.PasswordSalt, usuario.PasswordHash, model.Password);
+                // Preferir PasswordHasher. Se admite el hash legado
+                // solo para migrarlo a Identity tras un acceso válido.
+                PasswordVerificationResult verificacion = PasswordVerificationResult.Failed;
 
-                if (!passwordCorrecta)
+                if (!string.IsNullOrWhiteSpace(usuario.PasswordHashIdentity))
+                {
+                    verificacion = _passwordHasher.VerifyHashedPassword(
+                        usuario, usuario.PasswordHashIdentity, model.Password);
+                }
+                else if (usuario.PasswordSalt is not null &&
+                         usuario.PasswordHash is not null &&
+                         PasswordVerifier.VerifySha512(
+                             usuario.PasswordSalt, usuario.PasswordHash, model.Password))
+                {
+                    verificacion = PasswordVerificationResult.SuccessRehashNeeded;
+                }
+
+                if (verificacion == PasswordVerificationResult.Failed)
                 {
                     bool bloqueadoAhora = await _usuarios.RegistrarIntentoFallidoAsync(usuario.UsuarioId);
 
@@ -89,6 +110,18 @@ namespace ProyectoHospital.Controllers
                     return ErrorLogin(model, bloqueadoAhora ? MensajeBloqueo : MensajeCredenciales);
                 }
 
+                // Actualizar la representación de la contraseña si era legada
+                // o si Identity recomienda un nuevo hash.
+                if (verificacion == PasswordVerificationResult.SuccessRehashNeeded)
+                {
+                    string nuevoHash = _passwordHasher.HashPassword(usuario, model.Password);
+                    await _usuarios.GuardarPasswordIdentityAsync(usuario.UsuarioId, nuevoHash);
+                }
+
+                var roles = await _usuarios.ObtenerRolesAsync(usuario.UsuarioId);
+                if (roles.Count == 0)
+                    return ErrorLogin(model, "El usuario no tiene un rol activo asignado.");
+
                 await _usuarios.ReiniciarIntentosAsync(usuario.UsuarioId);
 
                 var claims = new List<Claim>
@@ -96,8 +129,6 @@ namespace ProyectoHospital.Controllers
                     new Claim(ClaimTypes.NameIdentifier, usuario.UsuarioId.ToString()),
                     new Claim(ClaimTypes.Name, usuario.NombreUsuario)
                 };
-
-                var roles = await _usuarios.ObtenerRolesAsync(usuario.UsuarioId);
 
                 foreach (var rol in roles)
                 {
@@ -107,11 +138,13 @@ namespace ProyectoHospital.Controllers
                 var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 var principal = new ClaimsPrincipal(identity);
 
-                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
-
+                // Registrar el acceso ANTES de emitir la cookie:
+                // si falla la bitácora, no queda una sesión iniciada.
                 await _usuarios.RegistrarAccesoAsync(
                     usuario.UsuarioId, usuario.NombreUsuario, ip, "LOGIN", "Exitoso",
                     "Inicio de sesión correcto.");
+
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                     return LocalRedirect(returnUrl);

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Data.SqlClient;
 using ProyectoHospital.Models.ViewModels;
 using ProyectoHospital.Repositories;
@@ -6,6 +7,9 @@ using ProyectoHospital.Repositories;
 namespace ProyectoHospital.Controllers
 {
     // HU09: Controlador del mantenimiento de pacientes.
+    // Provisionalmente, HU09 solo admite administradores hasta definir
+    // la matriz de permisos por roles hospitalarios con el equipo.
+    [Authorize(Roles = "Administrador")]
     public class PacientesController : Controller
     {
         private readonly PacienteRepository _pacientes;
