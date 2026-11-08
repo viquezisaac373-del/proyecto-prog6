@@ -1,161 +1,102 @@
-@model HomeViewModel
-
 @{
     ViewData["Title"] = "Inicio";
 }
 
-<div class="container mb-5">
-
-    @* HU06: Identidad turquesa elegida para el sistema. *@
-    <section class="text-center py-4">
-        <img src="~/images/favicon.svg"
-             alt="Símbolo del sistema hospitalario"
-             class="hospital-logo mb-3" />
-
-        <h1>Hospinomenal</h1>
-        <p class="lead">Innovación y cuidado en cada atención</p>
-
-        <a class="btn btn-primary" href="#servicios">
-            Ver servicios
-        </a>
+<div class="container my-4 mb-5">
+    @* Inicio informativo: no es el listado de módulos operativos. *@
+    <section class="p-4 p-md-5 rounded border bg-white mb-4">
+        <div class="row align-items-center g-4">
+            <div class="col-md-8">
+                <p class="text-uppercase small fw-semibold text-muted mb-2">
+                    Sistema hospitalario
+                </p>
+                <h1 class="mb-3">Bienvenido a Hospinomenal</h1>
+                <p class="lead mb-2">Innovación y cuidado en cada atención</p>
+                <p>
+                    Un espacio de trabajo para organizar los procesos administrativos
+                    de un hospital y acceder a los módulos habilitados según el
+                    perfil de cada usuario.
+                </p>
+                <a asp-controller="Modulos"
+                   asp-action="Index"
+                   class="btn btn-primary mt-2">
+                    Ir al panel de módulos
+                </a>
+            </div>
+            <div class="col-md-4 text-center">
+                <img src="~/images/favicon.svg"
+                     class="hospital-logo"
+                     alt="Símbolo de Hospinomenal" />
+            </div>
+        </div>
     </section>
 
-    <section id="servicios" aria-labelledby="tituloServicios">
-        <h2 id="tituloServicios">Servicios principales</h2>
-        <p>Seleccione una de las siguientes opciones:</p>
-
-        <div class="row">
-            @foreach (ServicioHospitalario servicio in Model.Servicios)
-            {
-                <div class="col-md-4 mb-3" id="servicio-@servicio.Id">
-                    <div class="border rounded p-3 h-100 d-flex flex-column">
-                        <h3 class="h5">@servicio.Nombre</h3>
-                        <p>@servicio.Descripcion</p>
-
-                        <div class="mt-auto">
-                            @switch (servicio.TipoServicio)
-                            {
-                                case TipoServicioHospitalario.Citas:
-                                    <a asp-controller="Citas"
-                                       asp-action="Index"
-                                       class="btn btn-outline-primary">
-                                        Ver citas
-                                    </a>
-                                    break;
-
-                                case TipoServicioHospitalario.Pacientes:
-                                    @* HU09: enlazar al CRUD real, no a la vista provisional. *@
-                                    <a asp-controller="Pacientes"
-                                       asp-action="Index"
-                                       class="btn btn-primary">
-                                        Gestionar pacientes
-                                    </a>
-                                    break;
-
-                                case TipoServicioHospitalario.Medicamentos:
-                                    <a asp-controller="Medicamentos"
-                                       asp-action="Index"
-                                       class="btn btn-outline-primary">
-                                        Ver medicamentos
-                                    </a>
-                                    break;
-                            }
-                        </div>
-                    </div>
+    <section aria-labelledby="tituloInformacion" class="mb-4">
+        <h2 id="tituloInformacion" class="h4 mb-3">Información general</h2>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="h-100 border rounded bg-white p-3">
+                    <h3 class="h5">Acceso autorizado</h3>
+                    <p class="mb-0">
+                        Cada usuario accede mediante una sesión individual.
+                        Los permisos dependen de los roles asignados.
+                    </p>
                 </div>
+            </div>
+            <div class="col-md-4">
+                <div class="h-100 border rounded bg-white p-3">
+                    <h3 class="h5">Gestión de pacientes</h3>
+                    <p class="mb-0">
+                        El mantenimiento de pacientes permite consultar,
+                        registrar, modificar y desactivar registros.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="h-100 border rounded bg-white p-3">
+                    <h3 class="h5">Evolución del sistema</h3>
+                    <p class="mb-0">
+                        Las secciones de citas y medicamentos se incorporarán
+                        cuando sus módulos estén integrados y validados.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="border rounded bg-white p-3 p-md-4 mb-4"
+             aria-labelledby="tituloAccesos">
+        <h2 class="h4" id="tituloAccesos">Accesos disponibles</h2>
+        <p>
+            Utilice el panel de módulos para entrar a las funcionalidades del sistema.
+            La gestión de pacientes requiere permisos de administrador en esta etapa.
+        </p>
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-controller="Modulos"
+               asp-action="Index"
+               class="btn btn-outline-primary">
+                Ver módulos
+            </a>
+            @if (User.IsInRole("Administrador"))
+            {
+                <a asp-controller="Pacientes"
+                   asp-action="Index"
+                   class="btn btn-primary">
+                    Gestionar pacientes
+                </a>
             }
         </div>
     </section>
 
-    <hr />
-
     <section id="contacto" class="mb-4" aria-labelledby="tituloContacto">
-        <h2 id="tituloContacto">Contacto</h2>
-        <p>Para más información, comuníquese con la recepción del hospital.</p>
-
-        <button type="button"
-                class="btn btn-outline-primary"
-                data-bs-toggle="modal"
-                data-bs-target="#modalContacto">
-            Ver formulario de contacto
-        </button>
+        <h2 id="tituloContacto" class="h4">Información y soporte</h2>
+        <p>
+            Para consultas operativas o problemas de acceso, comuníquese
+            con el responsable designado por el hospital.
+        </p>
+        <p class="text-muted small mb-0">
+            El formulario de contacto y los canales de soporte se definirán
+            en una etapa posterior. No se han configurado destinatarios.
+        </p>
     </section>
-
-    @* Se conserva la maqueta visual de Maikol.
-       El envío estará disponible cuando exista un backend de contacto. *@
-    <div class="modal fade"
-         id="modalContacto"
-         tabindex="-1"
-         aria-labelledby="labelModalContacto"
-         aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="modal-title h5" id="labelModalContacto">
-                        Formulario de contacto
-                    </h3>
-                    <button type="button"
-                            class="btn-close"
-                            data-bs-dismiss="modal"
-                            aria-label="Cerrar"></button>
-                </div>
-
-                <div class="modal-body">
-                    <p class="text-muted">
-                        Vista preliminar. El envío de mensajes todavía no está disponible.
-                    </p>
-
-                    <form id="formContactoVistaPrevia">
-                        <fieldset disabled>
-                            <div class="mb-3">
-                                <label for="contactoNombre" class="form-label">Nombre</label>
-                                <input id="contactoNombre"
-                                       type="text"
-                                       class="form-control"
-                                       placeholder="Ingrese su nombre" />
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="contactoApellido" class="form-label">Apellido</label>
-                                <input id="contactoApellido"
-                                       type="text"
-                                       class="form-control"
-                                       placeholder="Ingrese su apellido" />
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="contactoCorreo" class="form-label">Correo electrónico</label>
-                                <input id="contactoCorreo"
-                                       type="email"
-                                       class="form-control"
-                                       placeholder="Ingrese su correo" />
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="contactoMensaje" class="form-label">Mensaje</label>
-                                <textarea id="contactoMensaje"
-                                          class="form-control"
-                                          rows="3"
-                                          placeholder="Ingrese su mensaje"></textarea>
-                            </div>
-                        </fieldset>
-                    </form>
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button"
-                            class="btn btn-outline-secondary"
-                            data-bs-dismiss="modal">
-                        Cerrar
-                    </button>
-                    <button type="button"
-                            class="btn btn-primary"
-                            disabled
-                            title="El envío se implementará en una próxima entrega">
-                        Enviar (próximamente)
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>

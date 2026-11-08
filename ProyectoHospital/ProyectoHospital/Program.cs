@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Identity;
+using ProyectoHospital.Models.Entities;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 
@@ -15,10 +17,22 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     ProyectoHospital.Repositories.UsuarioRepository>();
 
+// PasswordHasher de ASP.NET Core Identity (PBKDF2, versión Identity V3).
+// Se mantiene el mismo formato verificable al actualizar su costo.
+builder.Services.Configure<PasswordHasherOptions>(options =>
+{
+    options.IterationCount = 210_000;
+});
+
+builder.Services.AddScoped<IPasswordHasher<UsuarioRecord>, PasswordHasher<UsuarioRecord>>();
+
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.LoginPath = "/Account/Login";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Lax;
         options.LogoutPath = "/Account/Logout";
         options.AccessDeniedPath = "/Account/AccessDenied";
         options.ExpireTimeSpan = TimeSpan.FromMinutes(30);

@@ -1,9 +1,7 @@
 <nav class="navbar navbar-expand-sm navbar-light bg-light border-bottom mb-4"
      aria-label="Navegación principal">
     <div class="container">
-        <a class="navbar-brand"
-           asp-controller="Home"
-           asp-action="Index">
+        <a class="navbar-brand" asp-controller="Home" asp-action="Index">
             Hospinomenal
         </a>
 
@@ -20,30 +18,30 @@
         <div class="collapse navbar-collapse" id="menuPrincipal">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link"
-                       asp-controller="Home"
-                       asp-action="Index">
+                    <a class="nav-link" asp-controller="Home" asp-action="Index">
                         Inicio
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link"
-                       asp-controller="Citas"
-                       asp-action="Index">
+                    <a class="nav-link" asp-controller="Modulos" asp-action="Index">
+                        Módulos
+                    </a>
+                </li>
+                @if (User.IsInRole("Administrador"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Pacientes" asp-action="Index">
+                            Pacientes
+                        </a>
+                    </li>
+                }
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Citas" asp-action="Index">
                         Citas
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link"
-                       asp-controller="Pacientes"
-                       asp-action="Index">
-                        Pacientes
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link"
-                       asp-controller="Medicamentos"
-                       asp-action="Index">
+                    <a class="nav-link" asp-controller="Medicamentos" asp-action="Index">
                         Medicamentos
                     </a>
                 </li>
@@ -52,7 +50,7 @@
                        asp-controller="Home"
                        asp-action="Index"
                        asp-fragment="contacto">
-                        Contacto
+                        Información
                     </a>
                 </li>
             </ul>
@@ -61,14 +59,22 @@
             {
                 <div class="d-flex align-items-center gap-2">
                     <span class="navbar-text">@User.Identity.Name</span>
-                    <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
-                        <button type="submit" class="btn btn-outline-primary">Cerrar sesión</button>
+                    <form asp-controller="Account"
+                          asp-action="Logout"
+                          asp-antiforgery="true"
+                          method="post"
+                          class="m-0">
+                        <button type="submit" class="btn btn-outline-primary">
+                            Cerrar sesión
+                        </button>
                     </form>
                 </div>
             }
             else
             {
-                <a class="btn btn-outline-primary" asp-controller="Account" asp-action="Login">
+                <a asp-controller="Account"
+                   asp-action="Login"
+                   class="btn btn-outline-primary">
                     Ingresar
                 </a>
             }
