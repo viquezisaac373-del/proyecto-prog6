@@ -72,11 +72,11 @@ namespace ProyectoHospital.Models.ViewModels
         // Comprueba la estructura básica del correo.
         // Permite dominios como .com, .co, .cr, entre otros.
         [Required(ErrorMessage = "El correo es obligatorio.")]
-        [StringLength(200)]
+        [StringLength(200, ErrorMessage = "El correo no puede superar 200 caracteres.")]
         [EmailAddress(ErrorMessage = "Ingrese un correo válido.")]
         [RegularExpression(
-            @"^[^@\s]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$",
-            ErrorMessage = "Ingrese un dominio de correo completo.")]
+            @"^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$",
+            ErrorMessage = "Ingrese un correo válido, sin puntos consecutivos y con dominio completo.")]
         public string Correo { get; set; } = "";
 
         // DIRECCIÓN
