@@ -101,7 +101,7 @@ namespace ProyectoHospital.Repositories
             return roles;
         }
 
-        public async Task<bool> RegistrarIntentoFallidoAsync(int usuarioId)
+        public async Task<(bool Bloqueado, int Intento)> RegistrarIntentoFallidoAsync(int usuarioId)
         {
             const string sql = @"
                 UPDATE dbo.Usuarios
@@ -112,7 +112,8 @@ namespace ProyectoHospital.Repositories
                                             THEN 0
                                             ELSE IntentosFallidos + 1 END,
                     UpdatedAt = SYSUTCDATETIME()
-                OUTPUT CAST(CASE WHEN inserted.BloqueadoHasta > SYSDATETIME() THEN 1 ELSE 0 END AS BIT)
+                OUTPUT CAST(CASE WHEN inserted.BloqueadoHasta > SYSDATETIME() THEN 1 ELSE 0 END AS BIT) AS Bloqueado,
+                       CAST(deleted.IntentosFallidos + 1 AS INT) AS Intento
                 WHERE UsuarioId = @UsuarioId;";
 
             await using var conexion = new SqlConnection(_connectionString);
@@ -123,9 +124,12 @@ namespace ProyectoHospital.Repositories
             comando.Parameters.Add("@Maximo", SqlDbType.Int).Value = MaximoIntentos;
             comando.Parameters.Add("@Minutos", SqlDbType.Int).Value = MinutosBloqueo;
 
-            var resultado = await comando.ExecuteScalarAsync();
+            await using var lector = await comando.ExecuteReaderAsync();
 
-            return resultado is bool bloqueado && bloqueado;
+            if (!await lector.ReadAsync())
+                return (false, 0);
+
+            return (lector.GetBoolean(0), lector.GetInt32(1));
         }
 
         public async Task ReiniciarIntentosAsync(int usuarioId)
