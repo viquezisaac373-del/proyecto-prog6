@@ -16,15 +16,22 @@ body {
     --superficie: #CDEEEE;
     --detalle: #6FD0CC;
     --acento: #1A9E9B;
-    --texto: #0C4E4C;
+    --texto: #39264F;
+    --boton: #8054B8;
     margin-bottom: 60px;
     background: var(--fondo);
     color: var(--texto);
 }
 
 .hospital-logo {
-    width: 100px;
-    height: 100px;
+    width: 250px;
+    height: 250px;
+}
+
+.logo-hospital{
+    width: 250px;
+    height: 250px;
+
 }
 
 .btn:focus,
@@ -118,12 +125,12 @@ footer {
 .login-card {
     background: var(--fondo);
     border: 1px solid var(--detalle);
-    border-top: 4px solid var(--acento);
+    border-top: 4px solid var(--boton);
 }
 
 .login-logo {
-    width: 64px;
-    height: 64px;
+    width: 94px;
+    height: 94px;
 }
 
 .login-card .form-control {
