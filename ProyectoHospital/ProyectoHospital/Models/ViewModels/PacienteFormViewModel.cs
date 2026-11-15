@@ -1,5 +1,6 @@
 ﻿
 using System.ComponentModel.DataAnnotations;
+using PhoneNumbers;
 
 namespace ProyectoHospital.Models.ViewModels
 {
@@ -64,7 +65,7 @@ namespace ProyectoHospital.Models.ViewModels
         [Required(ErrorMessage = "El teléfono es obligatorio.")]
         [StringLength(20)]
         [RegularExpression(
-            @"^(?:[2-9][0-9]{7}|\+[1-9][0-9]{7,14}|\+[1-9][0-9]{0,2} [0-9]{7,12})$",
+            @"^(?:[0-9]{8}|\+[1-9][0-9]{7,14})$",
             ErrorMessage = "Ingrese 8 dígitos nacionales o un número internacional válido.")]
         public string NumeroTelefono { get; set; } = "";
 
@@ -98,41 +99,77 @@ namespace ProyectoHospital.Models.ViewModels
         [Required(ErrorMessage = "El teléfono de emergencia es obligatorio.")]
         [StringLength(20)]
         [RegularExpression(
-            @"^(?:[2-9][0-9]{7}|\+[1-9][0-9]{7,14}|\+[1-9][0-9]{0,2} [0-9]{7,12})$",
+            @"^(?:[0-9]{8}|\+[1-9][0-9]{7,14})$",
             ErrorMessage = "Ingrese un teléfono nacional o internacional válido.")]
         public string TelefonoEmergencia { get; set; } = "";
 
         // VALIDACIONES ADICIONALES
-        // IValidatableObject permite aplicar reglas que
-        // requieren evaluar el valor de una propiedad.
         public IEnumerable<ValidationResult> Validate(
-        ValidationContext validationContext)
+     ValidationContext validationContext)
         {
-            if (!FechaNacimiento.HasValue)
+            // VALIDACIÓN DE FECHA DE NACIMIENTO
+            if (FechaNacimiento.HasValue)
             {
-                yield break;
+                DateTime fechaNacimiento = FechaNacimiento.Value.Date;
+                DateTime fechaActual = DateTime.Today;
+
+                if (fechaNacimiento > fechaActual)
+                {
+                    yield return new ValidationResult(
+                        "La fecha de nacimiento no puede ser futura.",
+                        new[] { nameof(FechaNacimiento) });
+                }
+
+                // Límite provisional pendiente de aprobación del PO.
+                DateTime fechaMinima = fechaActual.AddYears(-125);
+
+                if (fechaNacimiento < fechaMinima)
+                {
+                    yield return new ValidationResult(
+                        "La fecha de nacimiento supera el límite de antigüedad permitido.",
+                        new[] { nameof(FechaNacimiento) });
+                }
             }
 
-            DateTime fechaNacimiento = FechaNacimiento.Value.Date;
-            DateTime fechaActual = DateTime.Today;
+            // VALIDACIÓN DE TELÉFONOS
+            var utilidadTelefonica = PhoneNumberUtil.GetInstance();
 
-            // Rechazar fechas posteriores al día actual.
-            if (fechaNacimiento > fechaActual)
+            var telefonos = new[]
             {
-                yield return new ValidationResult(
-                    "La fecha de nacimiento no puede ser futura.",
-                    new[] { nameof(FechaNacimiento) });
-            }
+        (Valor: NumeroTelefono, Campo: nameof(NumeroTelefono)),
+        (Valor: TelefonoEmergencia, Campo: nameof(TelefonoEmergencia))
+    };
 
-            // Límite provisional de 125 años.
-            // Pendiente de aprobación por el Product Owner.
-            DateTime fechaMinima = fechaActual.AddYears(-125);
-
-            if (fechaNacimiento < fechaMinima)
+            foreach (var telefono in telefonos)
             {
-                yield return new ValidationResult(
-                    "La fecha de nacimiento supera el límite de antigüedad permitido.",
-                    new[] { nameof(FechaNacimiento) });
+                // Required valida los campos vacíos.
+                if (string.IsNullOrWhiteSpace(telefono.Valor))
+                {
+                    continue;
+                }
+
+                bool esValido = false;
+
+                try
+                {
+                    // CR se usa para interpretar números nacionales.
+                    // Si comienza con +, se reconoce el prefijo internacional.
+                    var numero = utilidadTelefonica.Parse(
+                        telefono.Valor, "CR");
+
+                    esValido = utilidadTelefonica.IsValidNumber(numero);
+                }
+                catch (NumberParseException)
+                {
+                    esValido = false;
+                }
+
+                if (!esValido)
+                {
+                    yield return new ValidationResult(
+                        "Ingrese un número telefónico válido para el país correspondiente.",
+                        new[] { telefono.Campo });
+                }
             }
         }
     }

@@ -555,8 +555,7 @@
 
             limpiarError(campo, contenedorError);
 
-            if (!campo.value.trim() || !selector.isValidNumber()) {
-
+             if (!campo.value.trim() || !selector.isValidNumberPrecise()) {
                 const mensaje =
                     "Ingrese un número válido para el país seleccionado.";
 
