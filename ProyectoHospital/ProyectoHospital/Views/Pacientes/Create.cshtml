@@ -132,11 +132,14 @@
                             Fecha de nacimiento
                         </label>
 
-                        @* No permitir fechas futuras desde el navegador.
-                           El ViewModel y SQL Server también las validan. *@
+                        @* Restringir fechas futuras y excesivamente antiguas desde el navegador.
+                        El ViewModel también valida estas condiciones en el servidor. *@
                         <input asp-for="FechaNacimiento"
                                type="date"
+                               min="@DateTime.Today.AddYears(-125).ToString("yyyy-MM-dd")"
                                max="@DateTime.Today.ToString("yyyy-MM-dd")"
+                               data-msg-min="La fecha de nacimiento supera el límite de antigüedad permitido."
+                               data-msg-max="La fecha de nacimiento no puede ser futura."
                                class="form-control" />
 
                         <span asp-validation-for="FechaNacimiento"

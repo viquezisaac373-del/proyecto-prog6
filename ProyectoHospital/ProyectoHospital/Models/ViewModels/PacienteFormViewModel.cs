@@ -106,14 +106,32 @@ namespace ProyectoHospital.Models.ViewModels
         // IValidatableObject permite aplicar reglas que
         // requieren evaluar el valor de una propiedad.
         public IEnumerable<ValidationResult> Validate(
-            ValidationContext validationContext)
+        ValidationContext validationContext)
         {
-            // La fecha de nacimiento no puede ser posterior a hoy.
-            if (FechaNacimiento.HasValue &&
-                FechaNacimiento.Value.Date > DateTime.Today)
+            if (!FechaNacimiento.HasValue)
+            {
+                yield break;
+            }
+
+            DateTime fechaNacimiento = FechaNacimiento.Value.Date;
+            DateTime fechaActual = DateTime.Today;
+
+            // Rechazar fechas posteriores al día actual.
+            if (fechaNacimiento > fechaActual)
             {
                 yield return new ValidationResult(
                     "La fecha de nacimiento no puede ser futura.",
+                    new[] { nameof(FechaNacimiento) });
+            }
+
+            // Límite provisional de 125 años.
+            // Pendiente de aprobación por el Product Owner.
+            DateTime fechaMinima = fechaActual.AddYears(-125);
+
+            if (fechaNacimiento < fechaMinima)
+            {
+                yield return new ValidationResult(
+                    "La fecha de nacimiento supera el límite de antigüedad permitido.",
                     new[] { nameof(FechaNacimiento) });
             }
         }
