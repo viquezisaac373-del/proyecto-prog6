@@ -551,24 +551,31 @@
         }
 
         // Validar un teléfono según el país seleccionado.
-        function validarTelefono(campo, selector, contenedorError) {
-
+               function validarTelefono(
+            campo,
+            selector,
+            contenedorError,
+            mostrarAvisoNativo = true
+        ) {
             limpiarError(campo, contenedorError);
 
-             if (!campo.value.trim() || !selector.isValidNumberPrecise()) {
+            if (!campo.value.trim() || !selector.isValidNumberPrecise()) {
+
                 const mensaje =
                     "Ingrese un número válido para el país seleccionado.";
 
                 campo.setCustomValidity(mensaje);
                 contenedorError.textContent = mensaje;
-                campo.reportValidity();
+
+                if (mostrarAvisoNativo) {
+                    campo.reportValidity();
+                }
 
                 return false;
             }
 
             return true;
         }
-
         // Inicializar los campos telefónicos.
         if (!window.intlTelInput) {
 
@@ -621,7 +628,28 @@
                 );
 
             });
+              // Validar cuando el usuario abandone el campo.
+                telefonoVisible.addEventListener("blur", () => {
+                    if (telefonosListos) {
+                        validarTelefono(
+                            telefonoVisible,
+                            selectorTelefono,
+                            errorTelefono,
+                            false
+                        );
+                    }
+                });
 
+                emergenciaVisible.addEventListener("blur", () => {
+                    if (telefonosListos) {
+                        validarTelefono(
+                            emergenciaVisible,
+                            selectorEmergencia,
+                            errorEmergencia,
+                            false
+                        );
+                    }
+                });
             // Quitar los errores cuando se modifique el número.
             telefonoVisible.addEventListener("input", () => {
                 limpiarError(telefonoVisible, errorTelefono);

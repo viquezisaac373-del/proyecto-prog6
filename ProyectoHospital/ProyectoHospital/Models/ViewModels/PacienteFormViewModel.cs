@@ -1,6 +1,7 @@
 ﻿
 using System.ComponentModel.DataAnnotations;
 using PhoneNumbers;
+using System.Text.RegularExpressions;
 
 namespace ProyectoHospital.Models.ViewModels
 {
@@ -169,6 +170,54 @@ namespace ProyectoHospital.Models.ViewModels
                     yield return new ValidationResult(
                         "Ingrese un número telefónico válido para el país correspondiente.",
                         new[] { telefono.Campo });
+                }
+            }
+            // VALIDACIÓN DE NOMBRES Y CONTACTO DE EMERGENCIA
+            var camposNombre = new[]
+            {
+                (Valor: Nombre, Campo: nameof(Nombre)),
+                (Valor: Apellidos, Campo: nameof(Apellidos)),
+                (Valor: ContactoEmergencia, Campo: nameof(ContactoEmergencia))
+            };
+
+            foreach (var dato in camposNombre)
+            {
+                // Required comprueba los campos vacíos.
+                if (string.IsNullOrWhiteSpace(dato.Valor))
+                {
+                    continue;
+                }
+
+                // Exigir al menos una letra.
+                // Admitir letras Unicode, tildes, espacios,
+                // apóstrofos, guiones y puntos.
+                bool formatoValido = Regex.IsMatch(
+                    dato.Valor,
+                    @"^(?=.*\p{L})[\p{L}\p{M} .'\u2019-]+$"
+                );
+
+                if (!formatoValido)
+                {
+                    yield return new ValidationResult(
+                        "Ingrese un nombre válido. Se permiten letras, espacios, apóstrofos, guiones y puntos.",
+                        new[] { dato.Campo }
+                    );
+                }
+            }
+            // VALIDACIÓN DE DIRECCIÓN
+            if (!string.IsNullOrWhiteSpace(Direccion))
+            {
+                string direccion = Direccion.Trim();
+
+                // Exigir una longitud mínima y al menos una letra.
+                // Evitar valores como "0", "123456" o "A".
+                if (direccion.Length < 3 ||
+                    !Regex.IsMatch(direccion, @"\p{L}"))
+                {
+                    yield return new ValidationResult(
+                        "Ingrese una dirección descriptiva que incluya letras.",
+                        new[] { nameof(Direccion) }
+                    );
                 }
             }
         }
