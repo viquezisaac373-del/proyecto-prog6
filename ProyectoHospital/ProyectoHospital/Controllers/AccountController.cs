@@ -52,7 +52,7 @@ namespace ProyectoHospital.Controllers
                 return View(model);
 
             string nombreUsuario = model.Usuario.Trim();
-            string? ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+            string? ip = IpCliente.Obtener(HttpContext);
             int? usuarioId = null;
 
             try
@@ -173,7 +173,7 @@ namespace ProyectoHospital.Controllers
         public async Task<IActionResult> Logout()
         {
             string nombreUsuario = User.Identity?.Name ?? string.Empty;
-            string? ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+            string? ip = IpCliente.Obtener(HttpContext);
             int? usuarioId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int id) ? id : null;
 
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
