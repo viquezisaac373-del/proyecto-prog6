@@ -52,7 +52,7 @@ namespace ProyectoHospital.Controllers
                 return View(model);
 
             string nombreUsuario = model.Usuario.Trim();
-            string? ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+            string? ip = IpCliente.Obtener(HttpContext);
             int? usuarioId = null;
 
             try
@@ -63,7 +63,9 @@ namespace ProyectoHospital.Controllers
                 {
                     await _usuarios.RegistrarAccesoAsync(
                         usuario?.UsuarioId, nombreUsuario, ip, "LOGIN", "Fallido",
-                        usuario is null ? "Usuario inexistente." : "Usuario inactivo.");
+                        usuario is null
+                            ? "Intento de inicio de sesión con un usuario que no está registrado."
+                            : "Intento de inicio de sesión con un usuario inactivo.");
 
                     return ErrorLogin(model, MensajeCredenciales);
                 }
@@ -74,7 +76,7 @@ namespace ProyectoHospital.Controllers
                 {
                     await _usuarios.RegistrarAccesoAsync(
                         usuario.UsuarioId, nombreUsuario, ip, "LOGIN", "Bloqueado",
-                        "Intento de ingreso con la cuenta bloqueada.");
+                        "Intento de inicio de sesión con la cuenta bloqueada temporalmente.");
 
                     return ErrorLogin(model, MensajeBloqueo);
                 }
@@ -98,14 +100,15 @@ namespace ProyectoHospital.Controllers
 
                 if (verificacion == PasswordVerificationResult.Failed)
                 {
-                    bool bloqueadoAhora = await _usuarios.RegistrarIntentoFallidoAsync(usuario.UsuarioId);
+                    var (bloqueadoAhora, intento) = await _usuarios.RegistrarIntentoFallidoAsync(usuario.UsuarioId);
+                    string intentos = $"intento {intento} de {UsuarioRepository.MaximoIntentos}";
 
                     await _usuarios.RegistrarAccesoAsync(
                         usuario.UsuarioId, nombreUsuario, ip, "LOGIN",
                         bloqueadoAhora ? "Bloqueado" : "Fallido",
                         bloqueadoAhora
-                            ? $"Contraseña incorrecta. Cuenta bloqueada {UsuarioRepository.MinutosBloqueo} minutos."
-                            : "Contraseña incorrecta.");
+                            ? $"Contraseña incorrecta ({intentos}). Cuenta bloqueada {UsuarioRepository.MinutosBloqueo} minutos."
+                            : $"Contraseña incorrecta ({intentos}).");
 
                     return ErrorLogin(model, bloqueadoAhora ? MensajeBloqueo : MensajeCredenciales);
                 }
@@ -120,7 +123,13 @@ namespace ProyectoHospital.Controllers
 
                 var roles = await _usuarios.ObtenerRolesAsync(usuario.UsuarioId);
                 if (roles.Count == 0)
+                {
+                    await _usuarios.RegistrarAccesoAsync(
+                        usuario.UsuarioId, nombreUsuario, ip, "LOGIN", "Fallido",
+                        "Credenciales correctas, pero el usuario no tiene un rol activo asignado.");
+
                     return ErrorLogin(model, "El usuario no tiene un rol activo asignado.");
+                }
 
                 await _usuarios.ReiniciarIntentosAsync(usuario.UsuarioId);
 
@@ -142,7 +151,7 @@ namespace ProyectoHospital.Controllers
                 // si falla la bitácora, no queda una sesión iniciada.
                 await _usuarios.RegistrarAccesoAsync(
                     usuario.UsuarioId, usuario.NombreUsuario, ip, "LOGIN", "Exitoso",
-                    "Inicio de sesión correcto.");
+                    $"Inicio de sesión correcto. Rol: {string.Join(", ", roles)}.");
 
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
@@ -173,7 +182,7 @@ namespace ProyectoHospital.Controllers
         public async Task<IActionResult> Logout()
         {
             string nombreUsuario = User.Identity?.Name ?? string.Empty;
-            string? ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+            string? ip = IpCliente.Obtener(HttpContext);
             int? usuarioId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int id) ? id : null;
 
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -182,7 +191,7 @@ namespace ProyectoHospital.Controllers
             {
                 await _usuarios.RegistrarAccesoAsync(
                     usuarioId, nombreUsuario, ip, "LOGOUT", "Exitoso",
-                    "Cierre de sesión.");
+                    "Cierre de sesión realizado por el usuario.");
             }
             catch (Exception ex)
             {
