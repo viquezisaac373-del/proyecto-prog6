@@ -17,6 +17,10 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     ProyectoHospital.Repositories.UsuarioRepository>();
 
+// Flujo especializado de recién nacidos (SQL de integración).
+builder.Services.AddScoped<
+    ProyectoHospital.Repositories.RecienNacidoRepository>();
+
 // PasswordHasher de ASP.NET Core Identity (PBKDF2, versión Identity V3).
 // Se mantiene el mismo formato verificable al actualizar su costo.
 builder.Services.Configure<PasswordHasherOptions>(options =>
