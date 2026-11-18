@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Data.SqlClient;
 using ProyectoHospital.Models.ViewModels;
 using ProyectoHospital.Repositories;
+using System.Security.Claims;
 
 namespace ProyectoHospital.Controllers
 {
@@ -54,11 +55,21 @@ namespace ProyectoHospital.Controllers
             {
                 return View(modelo);
             }
+            // Obtener la identidad del usuario autenticado.
+            // Nunca confiar en un UsuarioId enviado desde el formulario.
+            if (!int.TryParse(
+                    User.FindFirstValue(ClaimTypes.NameIdentifier),
+                    out int usuarioId) || usuarioId <= 0)
+            {
+                _logger.LogWarning(
+                    "Intento de registrar un paciente sin UsuarioId válido.");
 
+                return Forbid();
+            }
             try
             {
                 // Ejecutar usp_RegistrarPaciente mediante el repositorio.
-                int pacienteId = await _pacientes.RegistrarAsync(modelo);
+                int pacienteId = await _pacientes.RegistrarAsync(modelo, usuarioId);
 
                 // Mostrar confirmación después del registro.
                 TempData["MensajeExito"] =
@@ -138,10 +149,21 @@ namespace ProyectoHospital.Controllers
 
             if (!ModelState.IsValid)
                 return View("Create", modelo);
+            // Obtener el identificador del usuario autenticado.
+            if (!int.TryParse(
+                    User.FindFirstValue(ClaimTypes.NameIdentifier),
+                    out int usuarioId) || usuarioId <= 0)
+            {
+                _logger.LogWarning(
+                    "Intento de editar un paciente sin UsuarioId válido.");
 
+                return Forbid();
+            }
             try
             {
-                bool actualizado = await _pacientes.ActualizarAsync(modelo);
+                bool actualizado = await _pacientes.ActualizarAsync(
+                    modelo,
+                    usuarioId);
 
                 if (!actualizado)
                     return NotFound();
@@ -178,9 +200,22 @@ namespace ProyectoHospital.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Desactivar(int id)
         {
+            // Obtener el identificador del usuario autenticado.
+            if (!int.TryParse(
+                    User.FindFirstValue(ClaimTypes.NameIdentifier),
+                    out int usuarioId) || usuarioId <= 0)
+            {
+                _logger.LogWarning(
+                    "Intento de desactivar un paciente sin UsuarioId válido.");
+
+                return Forbid();
+            }
+
             try
             {
-                bool resultado = await _pacientes.DesactivarAsync(id);
+                bool resultado = await _pacientes.DesactivarAsync(
+                    id,
+                    usuarioId);
 
                 TempData[resultado ? "MensajeExito" : "MensajeError"] =
                     resultado
