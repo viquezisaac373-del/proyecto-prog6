@@ -1,0 +1,75 @@
+@model List<ProyectoHospital.Repositories.RecienNacidoPendiente>
+
+@{
+    ViewData["Title"] = "Recién nacidos";
+}
+
+<div class="container mt-4 mb-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h2>Recién nacidos</h2>
+            <p class="text-muted mb-0">Registro de nacimientos e identificaciones oficiales pendientes.</p>
+        </div>
+        <a asp-controller="RecienNacidos" asp-action="Registrar" class="btn btn-primary">
+            Registrar recién nacido
+        </a>
+    </div>
+
+    @if (TempData["MensajeExito"] is string mensaje)
+    {
+        <div class="alert alert-success" role="status">@mensaje</div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-header">Expedientes pendientes de identificación</div>
+        <div class="card-body">
+            @if (Model.Count == 0)
+            {
+                <div class="alert alert-info mb-0">
+                    No hay recién nacidos con identificación oficial pendiente.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Paciente ID</th>
+                                <th>Nacimiento ID</th>
+                                <th>Recién nacido</th>
+                                <th>Madre</th>
+                                <th>Fecha y hora</th>
+                                <th>Identificación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var bebe in Model)
+                            {
+                                <tr>
+                                    <td>@bebe.PacienteId</td>
+                                    <td>@bebe.NacimientoId</td>
+                                    <td>@bebe.NombreCompleto</td>
+                                    <td>@bebe.NombreMadre</td>
+                                    <td>@bebe.FechaHoraNacimiento.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        <a asp-controller="RecienNacidos"
+                                           asp-action="AsignarIdentificacion"
+                                           asp-route-id="@bebe.PacienteId"
+                                           class="btn btn-sm btn-outline-primary">
+                                            Asignar identificación
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+    <p class="text-muted small mt-3">
+        La identificación pendiente no crea un usuario de acceso para el bebé.
+        Los expedientes con identificación asignada permanecen en el módulo de pacientes.
+    </p>
+</div>
