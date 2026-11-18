@@ -1,0 +1,176 @@
+@model BitacoraIndexViewModel
+@using ProyectoHospital.Models.Enums
+@{
+    ViewData["Title"] = "Bitácoras del sistema";
+    var tipos = Enum.GetValues<TipoBitacora>();
+}
+
+<div class="container mt-4 mb-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-4">
+        <div>
+            <h2>Bitácoras del sistema</h2>
+            <p class="text-muted mb-0">Consulta de los eventos registrados en Hospinomenal. Solo lectura.</p>
+        </div>
+        <a class="btn btn-primary" asp-action="Index" asp-route-tipo="@Model.Tipo">Actualizar</a>
+    </div>
+
+    <ul class="nav nav-tabs bitacoras-tabs" role="tablist">
+        @foreach (var tipo in tipos)
+        {
+            <li class="nav-item" role="presentation">
+                <a class="nav-link @(tipo == Model.Tipo ? "active" : "")"
+                   aria-current="@(tipo == Model.Tipo ? "page" : null)"
+                   asp-action="Index" asp-route-tipo="@tipo">
+                    @BitacoraIndexViewModel.NombreBitacora(tipo)
+                </a>
+            </li>
+        }
+    </ul>
+
+    <div class="card shadow-sm bitacoras-card">
+        <div class="card-header d-flex justify-content-between">
+            <span>Bitácora de @BitacoraIndexViewModel.NombreBitacora(Model.Tipo).ToLower()</span>
+            @if (Model.Error is null)
+            {
+                <span class="text-muted small">@Model.Registros.Count registro(s) · máximo @Model.Filtro.Maximo, del más reciente al más antiguo</span>
+            }
+        </div>
+
+        <div class="card-body">
+            @if (Model.Error is not null)
+            {
+                <div class="alert alert-danger mb-0" role="alert">@Model.Error</div>
+            }
+            else if (Model.Registros.Count == 0)
+            {
+                <div class="alert alert-info mb-0" role="status">
+                    No hay registros en la bitácora de @BitacoraIndexViewModel.NombreBitacora(Model.Tipo).ToLower().
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle small mb-0">
+                        <thead>
+                            @switch (Model.Tipo)
+                            {
+                                case TipoBitacora.Accesos:
+                                    <tr>
+                                        <th scope="col">Fecha y hora</th>
+                                        <th scope="col">Usuario</th>
+                                        <th scope="col">Dirección IP</th>
+                                        <th scope="col">Acción</th>
+                                        <th scope="col">Resultado</th>
+                                        <th scope="col">Descripción</th>
+                                    </tr>
+                                    break;
+                                case TipoBitacora.Auditoria:
+                                    <tr>
+                                        <th scope="col">Fecha y hora</th>
+                                        <th scope="col">Acción</th>
+                                        <th scope="col">Tabla</th>
+                                        <th scope="col">Registro</th>
+                                        <th scope="col">Usuario</th>
+                                        <th scope="col">Origen</th>
+                                        <th scope="col">Detalles</th>
+                                    </tr>
+                                    break;
+                                case TipoBitacora.Errores:
+                                    <tr>
+                                        <th scope="col">Fecha y hora</th>
+                                        <th scope="col">Operación</th>
+                                        <th scope="col">Objeto</th>
+                                        <th scope="col">Mensaje</th>
+                                        <th scope="col">N.º error</th>
+                                        <th scope="col">Severidad</th>
+                                        <th scope="col">Línea</th>
+                                        <th scope="col">Usuario</th>
+                                        <th scope="col">Resultado</th>
+                                    </tr>
+                                    break;
+                                case TipoBitacora.Notificaciones:
+                                    <tr>
+                                        <th scope="col">Fecha y hora</th>
+                                        <th scope="col">Paciente</th>
+                                        <th scope="col">Cita</th>
+                                        <th scope="col">Mensaje</th>
+                                        <th scope="col">Estado de envío</th>
+                                    </tr>
+                                    break;
+                            }
+                        </thead>
+                        <tbody>
+                            @foreach (var r in Model.Registros)
+                            {
+                                var fecha = r.FechaHora.ToString("dd/MM/yyyy HH:mm:ss");
+                                var usuario = string.IsNullOrWhiteSpace(r.Usuario) ? "Sin registro" : r.Usuario;
+                                var resultado = BitacoraIndexViewModel.ClaseResultado(r.Resultado);
+
+                                @switch (Model.Tipo)
+                                {
+                                    case TipoBitacora.Accesos:
+                                        <tr>
+                                            <td class="text-nowrap">@fecha</td>
+                                            <td>@usuario</td>
+                                            <td>@(r.Ip ?? "No disponible")</td>
+                                            <td>@r.Accion</td>
+                                            <td><span class="badge @resultado">@r.Resultado</span></td>
+                                            <td>@r.Descripcion</td>
+                                        </tr>
+                                        break;
+                                    case TipoBitacora.Auditoria:
+                                        <tr>
+                                            <td class="text-nowrap">@fecha</td>
+                                            <td>@r.Accion</td>
+                                            <td>@(r.Tabla ?? "No indicada")</td>
+                                            <td>@(r.RegistroAfectado ?? "No indicado")</td>
+                                            <td>@usuario</td>
+                                            <td>@(r.Objeto ?? "No indicado")</td>
+                                            <td>
+                                                <details>
+                                                    <summary>Ver cambios</summary>
+                                                    <div class="row g-2 mt-1">
+                                                        <div class="col-12 col-lg-6">
+                                                            <div class="fw-semibold">Valores anteriores</div>
+                                                            <pre class="bitacora-detalle">@BitacoraIndexViewModel.FormatearDetalle(r.ValoresAnteriores)</pre>
+                                                        </div>
+                                                        <div class="col-12 col-lg-6">
+                                                            <div class="fw-semibold">Valores nuevos</div>
+                                                            <pre class="bitacora-detalle">@BitacoraIndexViewModel.FormatearDetalle(r.ValoresNuevos)</pre>
+                                                        </div>
+                                                    </div>
+                                                </details>
+                                            </td>
+                                        </tr>
+                                        break;
+                                    case TipoBitacora.Errores:
+                                        <tr>
+                                            <td class="text-nowrap">@fecha</td>
+                                            <td>@r.Accion</td>
+                                            <td>@(r.Objeto ?? "No indicado")</td>
+                                            <td>@r.Descripcion</td>
+                                            <td>@(r.NumeroError?.ToString() ?? "—")</td>
+                                            <td>@(r.Severidad?.ToString() ?? "—")</td>
+                                            <td>@(r.Linea?.ToString() ?? "—")</td>
+                                            <td>@usuario</td>
+                                            <td><span class="badge @resultado">@r.Resultado</span></td>
+                                        </tr>
+                                        break;
+                                    case TipoBitacora.Notificaciones:
+                                        <tr>
+                                            <td class="text-nowrap">@fecha</td>
+                                            <td>@(r.PacienteId is null ? "Sin paciente" : $"{r.Paciente} (Id {r.PacienteId})")</td>
+                                            <td>@(r.CitaId?.ToString() ?? "Sin cita")</td>
+                                            <td>@r.Descripcion</td>
+                                            <td><span class="badge @resultado">@r.Resultado</span></td>
+                                        </tr>
+                                        break;
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
