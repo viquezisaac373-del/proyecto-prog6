@@ -12,7 +12,7 @@ namespace ProyectoHospital.Repositories
                 AND (@Hasta IS NULL OR b.FechaHora < DATEADD(DAY, 1, @Hasta))";
 
         private const string SqlAccesos = @"
-            SELECT TOP (@Maximo)
+            SELECT
                 v.AccesoId AS Id,
                 DATEADD(SECOND, DATEDIFF(SECOND, CAST('00:00:00' AS TIME(0)), v.Hora),
                         CAST(v.Fecha AS DATETIME2(0))) AS FechaHora,
@@ -32,16 +32,18 @@ namespace ProyectoHospital.Repositories
                 CAST(NULL AS INT) AS Linea,
                 CAST(NULL AS INT) AS PacienteId,
                 CAST(NULL AS NVARCHAR(240)) AS Paciente,
-                CAST(NULL AS INT) AS CitaId
+                CAST(NULL AS INT) AS CitaId,
+                COUNT(*) OVER () AS TotalRegistros
             FROM dbo.vw_BitacoraAccesos v
             WHERE (@Desde IS NULL OR v.Fecha >= @Desde)
                 AND (@Hasta IS NULL OR v.Fecha <= @Hasta)
                 AND (@Usuario IS NULL OR v.NombreUsuario LIKE @Usuario ESCAPE N'\')
                 AND (@Accion IS NULL OR v.Accion = @Accion)
-            ORDER BY v.AccesoId DESC;";
+            ORDER BY {0}
+            OFFSET @Saltar ROWS FETCH NEXT @Tamano ROWS ONLY;";
 
         private const string SqlAuditoria = @"
-            SELECT TOP (@Maximo)
+            SELECT
                 b.AuditoriaId AS Id,
                 b.FechaHora,
                 b.Accion,
@@ -61,16 +63,18 @@ namespace ProyectoHospital.Repositories
                 CAST(NULL AS INT) AS Linea,
                 CAST(NULL AS INT) AS PacienteId,
                 CAST(NULL AS NVARCHAR(240)) AS Paciente,
-                CAST(NULL AS INT) AS CitaId
+                CAST(NULL AS INT) AS CitaId,
+                COUNT(*) OVER () AS TotalRegistros
             FROM dbo.BitacoraAuditoria b
             LEFT JOIN dbo.Usuarios u ON u.UsuarioId = b.UsuarioId
             WHERE" + FiltroFecha + @"
                 AND (@Usuario IS NULL OR u.Usuario LIKE @Usuario ESCAPE N'\')
                 AND (@Accion IS NULL OR b.Accion = @Accion)
-            ORDER BY b.FechaHora DESC, b.AuditoriaId DESC;";
+            ORDER BY {0}
+            OFFSET @Saltar ROWS FETCH NEXT @Tamano ROWS ONLY;";
 
         private const string SqlErrores = @"
-            SELECT TOP (@Maximo)
+            SELECT
                 b.ErrorId AS Id,
                 b.FechaHora,
                 b.Accion,
@@ -89,16 +93,18 @@ namespace ProyectoHospital.Repositories
                 b.Linea,
                 CAST(NULL AS INT) AS PacienteId,
                 CAST(NULL AS NVARCHAR(240)) AS Paciente,
-                CAST(NULL AS INT) AS CitaId
+                CAST(NULL AS INT) AS CitaId,
+                COUNT(*) OVER () AS TotalRegistros
             FROM dbo.BitacoraErrores b
             LEFT JOIN dbo.Usuarios u ON u.UsuarioId = b.UsuarioId
             WHERE" + FiltroFecha + @"
                 AND (@Usuario IS NULL OR u.Usuario LIKE @Usuario ESCAPE N'\')
                 AND (@Accion IS NULL OR b.Accion = @Accion)
-            ORDER BY b.FechaHora DESC, b.ErrorId DESC;";
+            ORDER BY {0}
+            OFFSET @Saltar ROWS FETCH NEXT @Tamano ROWS ONLY;";
 
         private const string SqlNotificaciones = @"
-            SELECT TOP (@Maximo)
+            SELECT
                 b.NotificacionId AS Id,
                 b.FechaHora,
                 N'Notificación' AS Accion,
@@ -118,13 +124,33 @@ namespace ProyectoHospital.Repositories
                 b.PacienteId,
                 CASE WHEN p.PacienteId IS NULL THEN NULL
                      ELSE CONCAT(p.Nombre, N' ', p.Apellidos) END AS Paciente,
-                b.CitaId
+                b.CitaId,
+                COUNT(*) OVER () AS TotalRegistros
             FROM dbo.BitacoraNotificaciones b
             LEFT JOIN dbo.Pacientes p ON p.PacienteId = b.PacienteId
             WHERE" + FiltroFecha + @"
                 AND (@Usuario IS NULL OR CONCAT(p.Nombre, N' ', p.Apellidos) LIKE @Usuario ESCAPE N'\')
                 AND (@Accion IS NULL OR b.EstadoEnvio = @Accion)
-            ORDER BY b.FechaHora DESC, b.NotificacionId DESC;";
+            ORDER BY {0}
+            OFFSET @Saltar ROWS FETCH NEXT @Tamano ROWS ONLY;";
+
+        private static readonly Dictionary<string, string> ColumnasOrden = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["fecha"] = "FechaHora",
+            ["usuario"] = "Usuario",
+            ["ip"] = "Ip",
+            ["accion"] = "Accion",
+            ["resultado"] = "Resultado",
+            ["descripcion"] = "Descripcion",
+            ["tabla"] = "Tabla",
+            ["registro"] = "RegistroAfectado",
+            ["objeto"] = "Objeto",
+            ["error"] = "NumeroError",
+            ["severidad"] = "Severidad",
+            ["linea"] = "Linea",
+            ["paciente"] = "Paciente",
+            ["cita"] = "CitaId"
+        };
 
         private readonly string _connectionString;
 
@@ -136,15 +162,18 @@ namespace ProyectoHospital.Repositories
                     "No se configuró la conexión HospitalDB.");
         }
 
-        public async Task<List<RegistroBitacora>> ConsultarAsync(TipoBitacora tipo, FiltroBitacora filtro)
+        public async Task<ResultadoBitacora> ConsultarAsync(TipoBitacora tipo, FiltroBitacora filtro)
         {
-            var registros = new List<RegistroBitacora>();
+            var resultado = new ResultadoBitacora();
+            int tamano = Math.Clamp(filtro.TamanoPagina, 1, 500);
+            int pagina = Math.Max(filtro.Pagina, 1);
 
             await using var conexion = new SqlConnection(_connectionString);
             await conexion.OpenAsync();
 
-            await using var comando = new SqlCommand(ObtenerSql(tipo), conexion);
-            comando.Parameters.Add("@Maximo", SqlDbType.Int).Value = Math.Clamp(filtro.Maximo, 1, 1000);
+            await using var comando = new SqlCommand(string.Format(ObtenerSql(tipo), ClausulaOrden(filtro)), conexion);
+            comando.Parameters.Add("@Saltar", SqlDbType.Int).Value = (pagina - 1) * tamano;
+            comando.Parameters.Add("@Tamano", SqlDbType.Int).Value = tamano;
             comando.Parameters.Add("@Desde", SqlDbType.Date).Value = (object?)filtro.Desde?.Date ?? DBNull.Value;
             comando.Parameters.Add("@Hasta", SqlDbType.Date).Value = (object?)filtro.Hasta?.Date ?? DBNull.Value;
             comando.Parameters.Add("@Usuario", SqlDbType.NVarChar, 260).Value = (object?)PatronBusqueda(filtro.Usuario) ?? DBNull.Value;
@@ -154,7 +183,8 @@ namespace ProyectoHospital.Repositories
 
             while (await lector.ReadAsync())
             {
-                registros.Add(new RegistroBitacora
+                resultado.Total = lector.GetInt32(19);
+                resultado.Registros.Add(new RegistroBitacora
                 {
                     Id = lector.GetInt64(0),
                     FechaHora = lector.GetDateTime(1),
@@ -178,7 +208,7 @@ namespace ProyectoHospital.Repositories
                 });
             }
 
-            return registros;
+            return resultado;
         }
 
         public async Task<List<string>> ObtenerAccionesAsync(TipoBitacora tipo)
@@ -216,6 +246,19 @@ namespace ProyectoHospital.Repositories
             TipoBitacora.Notificaciones => SqlNotificaciones,
             _ => throw new ArgumentOutOfRangeException(nameof(tipo))
         };
+
+        public static bool EsOrdenValido(string? orden) =>
+            !string.IsNullOrWhiteSpace(orden) && ColumnasOrden.ContainsKey(orden);
+
+        private static string ClausulaOrden(FiltroBitacora filtro)
+        {
+            string columna = filtro.Orden is not null && ColumnasOrden.TryGetValue(filtro.Orden, out var c)
+                ? c
+                : "FechaHora";
+            string direccion = filtro.Descendente ? "DESC" : "ASC";
+
+            return $"{columna} {direccion}, Id {direccion}";
+        }
 
         private static string? Texto(SqlDataReader lector, int indice) =>
             lector.IsDBNull(indice) ? null : lector.GetString(indice);

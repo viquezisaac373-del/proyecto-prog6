@@ -11,7 +11,7 @@
             <h2>Bitácoras del sistema</h2>
             <p class="text-muted mb-0">Consulta de los eventos registrados en Hospinomenal. Solo lectura.</p>
         </div>
-        <a class="btn btn-primary" asp-action="Index" asp-route-tipo="@Model.Tipo">Actualizar</a>
+        <a class="btn btn-primary" href="@(Context.Request.Path + Context.Request.QueryString)">Actualizar</a>
     </div>
 
     <ul class="nav nav-tabs bitacoras-tabs" role="tablist">
@@ -28,11 +28,48 @@
     </ul>
 
     <div class="card shadow-sm bitacoras-card">
+        <form method="get" asp-action="Index" class="bitacoras-filtros border-bottom p-3">
+            <input type="hidden" name="tipo" value="@Model.Tipo" />
+            <input type="hidden" name="orden" value="@Model.Filtro.Orden" />
+            <input type="hidden" name="dir" value="@(Model.Filtro.Descendente ? "desc" : "asc")" />
+            <div class="row g-2 align-items-end">
+                <div class="col-6 col-md-3 col-lg-2">
+                    <label for="desde" class="form-label small mb-1">Desde</label>
+                    <input type="date" id="desde" name="desde" class="form-control form-control-sm"
+                           value="@Model.Filtro.Desde?.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-6 col-md-3 col-lg-2">
+                    <label for="hasta" class="form-label small mb-1">Hasta</label>
+                    <input type="date" id="hasta" name="hasta" class="form-control form-control-sm"
+                           value="@Model.Filtro.Hasta?.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label for="usuario" class="form-label small mb-1">@Model.EtiquetaUsuario</label>
+                    <input type="text" id="usuario" name="usuario" maxlength="100" class="form-control form-control-sm"
+                           value="@Model.Filtro.Usuario" placeholder="Buscar por nombre" />
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label for="accion" class="form-label small mb-1">@Model.EtiquetaAccion</label>
+                    <select id="accion" name="accion" class="form-select form-select-sm">
+                        <option value="">Todas</option>
+                        @foreach (var a in Model.Acciones)
+                        {
+                            <option value="@a" selected="@(string.Equals(a, Model.Filtro.Accion, StringComparison.OrdinalIgnoreCase))">@a</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 col-md-6 col-lg-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm flex-fill">Filtrar</button>
+                    <a class="btn btn-outline-primary btn-sm flex-fill" asp-action="Index" asp-route-tipo="@Model.Tipo">Limpiar</a>
+                </div>
+            </div>
+        </form>
+
         <div class="card-header d-flex justify-content-between">
             <span>Bitácora de @BitacoraIndexViewModel.NombreBitacora(Model.Tipo).ToLower()</span>
-            @if (Model.Error is null)
+            @if (Model.Error is null && Model.AvisoFiltro is null)
             {
-                <span class="text-muted small">@Model.Registros.Count registro(s) · máximo @Model.Filtro.Maximo, del más reciente al más antiguo</span>
+                <span class="text-muted small">@(Model.Total == 0 ? "0 registros" : $"Mostrando {Model.PrimerRegistro}–{Model.UltimoRegistro} de {Model.Total} registros")</span>
             }
         </div>
 
@@ -41,10 +78,16 @@
             {
                 <div class="alert alert-danger mb-0" role="alert">@Model.Error</div>
             }
+            else if (Model.AvisoFiltro is not null)
+            {
+                <div class="alert alert-warning mb-0" role="alert">@Model.AvisoFiltro</div>
+            }
             else if (Model.Registros.Count == 0)
             {
                 <div class="alert alert-info mb-0" role="status">
-                    No hay registros en la bitácora de @BitacoraIndexViewModel.NombreBitacora(Model.Tipo).ToLower().
+                    @(Model.HayFiltros
+                        ? "No hay registros que coincidan con los filtros aplicados."
+                        : $"No hay registros en la bitácora de {BitacoraIndexViewModel.NombreBitacora(Model.Tipo).ToLower()}.")
                 </div>
             }
             else
@@ -56,45 +99,45 @@
                             {
                                 case TipoBitacora.Accesos:
                                     <tr>
-                                        <th scope="col">Fecha y hora</th>
-                                        <th scope="col">Usuario</th>
-                                        <th scope="col">Dirección IP</th>
-                                        <th scope="col">Acción</th>
-                                        <th scope="col">Resultado</th>
-                                        <th scope="col">Descripción</th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("fecha") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("fecha")'>Fecha y hora <span class="bitacora-flecha">@Model.Flecha("fecha")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("usuario") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("usuario")'>Usuario <span class="bitacora-flecha">@Model.Flecha("usuario")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("ip") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("ip")'>Dirección IP <span class="bitacora-flecha">@Model.Flecha("ip")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("accion") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("accion")'>Acción <span class="bitacora-flecha">@Model.Flecha("accion")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("resultado") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("resultado")'>Resultado <span class="bitacora-flecha">@Model.Flecha("resultado")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("descripcion") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("descripcion")'>Descripción <span class="bitacora-flecha">@Model.Flecha("descripcion")</span></a></th>
                                     </tr>
                                     break;
                                 case TipoBitacora.Auditoria:
                                     <tr>
-                                        <th scope="col">Fecha y hora</th>
-                                        <th scope="col">Acción</th>
-                                        <th scope="col">Tabla</th>
-                                        <th scope="col">Registro</th>
-                                        <th scope="col">Usuario</th>
-                                        <th scope="col">Origen</th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("fecha") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("fecha")'>Fecha y hora <span class="bitacora-flecha">@Model.Flecha("fecha")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("accion") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("accion")'>Acción <span class="bitacora-flecha">@Model.Flecha("accion")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("tabla") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("tabla")'>Tabla <span class="bitacora-flecha">@Model.Flecha("tabla")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("registro") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("registro")'>Registro <span class="bitacora-flecha">@Model.Flecha("registro")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("usuario") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("usuario")'>Usuario <span class="bitacora-flecha">@Model.Flecha("usuario")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("objeto") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("objeto")'>Origen <span class="bitacora-flecha">@Model.Flecha("objeto")</span></a></th>
                                         <th scope="col">Detalles</th>
                                     </tr>
                                     break;
                                 case TipoBitacora.Errores:
                                     <tr>
-                                        <th scope="col">Fecha y hora</th>
-                                        <th scope="col">Operación</th>
-                                        <th scope="col">Objeto</th>
-                                        <th scope="col">Mensaje</th>
-                                        <th scope="col">N.º error</th>
-                                        <th scope="col">Severidad</th>
-                                        <th scope="col">Línea</th>
-                                        <th scope="col">Usuario</th>
-                                        <th scope="col">Resultado</th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("fecha") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("fecha")'>Fecha y hora <span class="bitacora-flecha">@Model.Flecha("fecha")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("accion") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("accion")'>Operación <span class="bitacora-flecha">@Model.Flecha("accion")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("objeto") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("objeto")'>Objeto <span class="bitacora-flecha">@Model.Flecha("objeto")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("descripcion") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("descripcion")'>Mensaje <span class="bitacora-flecha">@Model.Flecha("descripcion")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("error") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("error")'>N.º error <span class="bitacora-flecha">@Model.Flecha("error")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("severidad") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("severidad")'>Severidad <span class="bitacora-flecha">@Model.Flecha("severidad")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("linea") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("linea")'>Línea <span class="bitacora-flecha">@Model.Flecha("linea")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("usuario") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("usuario")'>Usuario <span class="bitacora-flecha">@Model.Flecha("usuario")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("resultado") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("resultado")'>Resultado <span class="bitacora-flecha">@Model.Flecha("resultado")</span></a></th>
                                     </tr>
                                     break;
                                 case TipoBitacora.Notificaciones:
                                     <tr>
-                                        <th scope="col">Fecha y hora</th>
-                                        <th scope="col">Paciente</th>
-                                        <th scope="col">Cita</th>
-                                        <th scope="col">Mensaje</th>
-                                        <th scope="col">Estado de envío</th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("fecha") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("fecha")'>Fecha y hora <span class="bitacora-flecha">@Model.Flecha("fecha")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("paciente") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("paciente")'>Paciente <span class="bitacora-flecha">@Model.Flecha("paciente")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("cita") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("cita")'>Cita <span class="bitacora-flecha">@Model.Flecha("cita")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("descripcion") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("descripcion")'>Mensaje <span class="bitacora-flecha">@Model.Flecha("descripcion")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("resultado") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("resultado")'>Estado de envío <span class="bitacora-flecha">@Model.Flecha("resultado")</span></a></th>
                                     </tr>
                                     break;
                             }
@@ -170,6 +213,34 @@
                         </tbody>
                     </table>
                 </div>
+
+                @if (Model.TotalPaginas > 1)
+                {
+                    <nav class="mt-3" aria-label="Páginas de la bitácora">
+                        <ul class="pagination pagination-sm justify-content-center flex-wrap mb-0 bitacoras-paginacion">
+                            <li class="page-item @(Model.Filtro.Pagina == 1 ? "disabled" : "")">
+                                <a class="page-link" asp-action="Index" asp-all-route-data='@Model.RutaPagina(Model.Filtro.Pagina - 1)'>Anterior</a>
+                            </li>
+                            @foreach (var p in Model.PaginasVisibles())
+                            {
+                                if (p is null)
+                                {
+                                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                                }
+                                else
+                                {
+                                    <li class="page-item @(p == Model.Filtro.Pagina ? "active" : "")">
+                                        <a class="page-link" asp-action="Index" asp-all-route-data='@Model.RutaPagina(p.Value)'
+                                           aria-current="@(p == Model.Filtro.Pagina ? "page" : null)">@p</a>
+                                    </li>
+                                }
+                            }
+                            <li class="page-item @(Model.Filtro.Pagina == Model.TotalPaginas ? "disabled" : "")">
+                                <a class="page-link" asp-action="Index" asp-all-route-data='@Model.RutaPagina(Model.Filtro.Pagina + 1)'>Siguiente</a>
+                            </li>
+                        </ul>
+                    </nav>
+                }
             }
         </div>
     </div>
