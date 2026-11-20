@@ -150,3 +150,66 @@ footer {
     margin-bottom: 0;
     background: var(--superficie);
 }
+
+.bitacoras-tabs .nav-link {
+    color: var(--texto);
+}
+
+    .bitacoras-tabs .nav-link:not(.active):hover,
+    .bitacoras-tabs .nav-link:not(.active):focus-visible {
+        color: #fff;
+        background: var(--texto);
+        border-color: var(--texto);
+    }
+
+    .bitacoras-tabs .nav-link.active {
+        color: var(--texto);
+        font-weight: 600;
+        border-color: var(--detalle) var(--detalle) var(--fondo);
+        border-top: 3px solid var(--acento);
+    }
+
+.bitacoras-card {
+    border-top-left-radius: 0;
+    border-color: var(--detalle);
+}
+
+.bitacora-detalle {
+    max-height: 220px;
+    margin: 0;
+    padding: .5rem;
+    font-size: .75rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: var(--superficie);
+    border-radius: .25rem;
+}
+
+.bitacora-orden {
+    color: inherit;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+    .bitacora-orden:hover {
+        color: var(--boton);
+    }
+
+.bitacora-flecha {
+    font-size: .7rem;
+    opacity: .6;
+}
+
+.bitacoras-paginacion .page-link {
+    color: var(--texto);
+}
+
+.bitacoras-paginacion .page-item.active .page-link {
+    background: var(--texto);
+    border-color: var(--texto);
+    color: #fff;
+}
+
+.bitacoras-paginacion .page-link:hover {
+    color: var(--boton);
+}
