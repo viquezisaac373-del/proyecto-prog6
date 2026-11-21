@@ -1,14 +1,19 @@
-@model List<ProyectoHospital.Repositories.RecienNacidoPendiente>
+@model List<ProyectoHospital.Repositories.RecienNacidoResumen>
 
 @{
     ViewData["Title"] = "Recién nacidos";
+    bool puedeEditar = User.IsInRole("Administrador") ||
+                       User.IsInRole("Medico") || User.IsInRole("Médico");
+    bool puedeAnular = User.IsInRole("Administrador");
+    int pendientes = Model.Count(n => n.NacimientoActivo && n.PacienteActivo
+                                      && string.IsNullOrWhiteSpace(n.NumeroIdentificacion));
 }
 
 <div class="container mt-4 mb-5">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <div>
             <h2>Recién nacidos</h2>
-            <p class="text-muted mb-0">Registro de nacimientos e identificaciones oficiales pendientes.</p>
+            <p class="text-muted mb-0">Listado histórico de nacimientos, con y sin identificación oficial.</p>
         </div>
         <a asp-controller="RecienNacidos" asp-action="Registrar" class="btn btn-primary">
             Registrar recién nacido
@@ -20,14 +25,17 @@
         <div class="alert alert-success" role="status">@mensaje</div>
     }
 
+    <div class="alert alert-light border" role="status">
+        <strong>@Model.Count</strong> nacimientos registrados ·
+        <strong>@pendientes</strong> identificaciones pendientes
+    </div>
+
     <div class="card shadow-sm">
-        <div class="card-header">Expedientes pendientes de identificación</div>
+        <div class="card-header">Historial de nacimientos</div>
         <div class="card-body">
             @if (Model.Count == 0)
             {
-                <div class="alert alert-info mb-0">
-                    No hay recién nacidos con identificación oficial pendiente.
-                </div>
+                <div class="alert alert-info mb-0">Todavía no hay nacimientos registrados.</div>
             }
             else
             {
@@ -35,12 +43,14 @@
                     <table class="table table-striped table-hover align-middle">
                         <thead>
                             <tr>
-                                <th>Paciente ID</th>
-                                <th>Nacimiento ID</th>
-                                <th>Recién nacido</th>
-                                <th>Madre</th>
-                                <th>Fecha y hora</th>
-                                <th>Identificación</th>
+                                <th scope="col">Paciente</th>
+                                <th scope="col">Nacimiento</th>
+                                <th scope="col">Nombre del bebé</th>
+                                <th scope="col">Madre</th>
+                                <th scope="col">Fecha y hora</th>
+                                <th scope="col">Identificación</th>
+                                <th scope="col">Estado</th>
+                                <th scope="col">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -51,14 +61,65 @@
                                     <td>@bebe.NacimientoId</td>
                                     <td>@bebe.NombreCompleto</td>
                                     <td>@bebe.NombreMadre</td>
-                                    <td>@bebe.FechaHoraNacimiento.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td class="text-nowrap">@bebe.FechaHoraNacimiento.ToString("dd/MM/yyyy HH:mm")</td>
                                     <td>
-                                        <a asp-controller="RecienNacidos"
-                                           asp-action="AsignarIdentificacion"
-                                           asp-route-id="@bebe.PacienteId"
-                                           class="btn btn-sm btn-outline-primary">
-                                            Asignar identificación
-                                        </a>
+                                        @if (string.IsNullOrWhiteSpace(bebe.NumeroIdentificacion))
+                                        {
+                                            <span class="badge bg-warning text-dark">Pendiente</span>
+                                        }
+                                        else
+                                        {
+                                            <span>@bebe.NumeroIdentificacion</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!bebe.NacimientoActivo)
+                                        {
+                                            <span class="badge bg-secondary">Nacimiento anulado</span>
+                                        }
+                                        else if (!bebe.PacienteActivo)
+                                        {
+                                            <span class="badge bg-secondary">Paciente inactivo</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">Activo</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-1">
+                                            @if (bebe.NacimientoActivo && bebe.PacienteActivo)
+                                            {
+                                                @if (string.IsNullOrWhiteSpace(bebe.NumeroIdentificacion))
+                                                {
+                                                    <a asp-action="AsignarIdentificacion"
+                                                       asp-route-id="@bebe.PacienteId"
+                                                       class="btn btn-sm btn-outline-primary">
+                                                        Asignar ID
+                                                    </a>
+                                                }
+                                                @if (puedeEditar)
+                                                {
+                                                    <a asp-action="Editar"
+                                                       asp-route-id="@bebe.NacimientoId"
+                                                       class="btn btn-sm btn-outline-secondary">
+                                                        Editar
+                                                    </a>
+                                                }
+                                                @if (puedeAnular)
+                                                {
+                                                    <a asp-action="Anular"
+                                                       asp-route-id="@bebe.NacimientoId"
+                                                       class="btn btn-sm btn-outline-danger">
+                                                        Anular
+                                                    </a>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">Solo consulta</span>
+                                            }
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -69,7 +130,7 @@
         </div>
     </div>
     <p class="text-muted small mt-3">
-        La identificación pendiente no crea un usuario de acceso para el bebé.
-        Los expedientes con identificación asignada permanecen en el módulo de pacientes.
+        Anular un nacimiento no elimina ni desactiva el expediente del paciente.
+        Las modificaciones quedan registradas en la bitácora del sistema.
     </p>
 </div>
