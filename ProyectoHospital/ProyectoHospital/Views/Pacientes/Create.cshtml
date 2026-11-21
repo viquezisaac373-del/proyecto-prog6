@@ -132,11 +132,14 @@
                             Fecha de nacimiento
                         </label>
 
-                        @* No permitir fechas futuras desde el navegador.
-                           El ViewModel y SQL Server también las validan. *@
+                        @* Restringir fechas futuras y excesivamente antiguas desde el navegador.
+                        El ViewModel también valida estas condiciones en el servidor. *@
                         <input asp-for="FechaNacimiento"
                                type="date"
+                               min="@DateTime.Today.AddYears(-125).ToString("yyyy-MM-dd")"
                                max="@DateTime.Today.ToString("yyyy-MM-dd")"
+                               data-msg-min="La fecha de nacimiento supera el límite de antigüedad permitido."
+                               data-msg-max="La fecha de nacimiento no puede ser futura."
                                class="form-control" />
 
                         <span asp-validation-for="FechaNacimiento"
@@ -554,25 +557,31 @@
         }
 
         // Validar un teléfono según el país seleccionado.
-        function validarTelefono(campo, selector, contenedorError) {
-
+               function validarTelefono(
+            campo,
+            selector,
+            contenedorError,
+            mostrarAvisoNativo = true
+        ) {
             limpiarError(campo, contenedorError);
 
-            if (!campo.value.trim() || !selector.isValidNumber()) {
+            if (!campo.value.trim() || !selector.isValidNumberPrecise()) {
 
                 const mensaje =
                     "Ingrese un número válido para el país seleccionado.";
 
                 campo.setCustomValidity(mensaje);
                 contenedorError.textContent = mensaje;
-                campo.reportValidity();
+
+                if (mostrarAvisoNativo) {
+                    campo.reportValidity();
+                }
 
                 return false;
             }
 
             return true;
         }
-
         // Inicializar los campos telefónicos.
         if (!window.intlTelInput) {
 
@@ -625,7 +634,28 @@
                 );
 
             });
+              // Validar cuando el usuario abandone el campo.
+                telefonoVisible.addEventListener("blur", () => {
+                    if (telefonosListos) {
+                        validarTelefono(
+                            telefonoVisible,
+                            selectorTelefono,
+                            errorTelefono,
+                            false
+                        );
+                    }
+                });
 
+                emergenciaVisible.addEventListener("blur", () => {
+                    if (telefonosListos) {
+                        validarTelefono(
+                            emergenciaVisible,
+                            selectorEmergencia,
+                            errorEmergencia,
+                            false
+                        );
+                    }
+                });
             // Quitar los errores cuando se modifique el número.
             telefonoVisible.addEventListener("input", () => {
                 limpiarError(telefonoVisible, errorTelefono);
