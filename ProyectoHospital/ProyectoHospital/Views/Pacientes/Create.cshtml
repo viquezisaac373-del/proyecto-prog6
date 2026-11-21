@@ -228,7 +228,7 @@
                             </option>
 
                             <option value="ND">
-                                No determinado
+                                Pendiente de tipificación (grupo sanguíneo desconocido)
                             </option>
 
                             <option value="O+">O+</option>
@@ -243,7 +243,13 @@
                             <option value="AB+">AB+</option>
                             <option value="AB-">AB-</option>
 
+                            <option value="RHN">Rh nulo (fenotipo confirmado)</option>
+
                         </select>
+                        <div class="form-text">
+                            Rh nulo no significa Rh negativo ni tipo de sangre desconocido.
+                            Seleccione esta opción únicamente cuando exista una tipificación confirmada.
+                        </div>
 
                         <span asp-validation-for="TipoSangre"
                               class="text-danger"></span>

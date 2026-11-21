@@ -1,0 +1,41 @@
+@model ProyectoHospital.Models.ViewModels.IdentificacionRecienNacidoViewModel
+
+@{
+    ViewData["Title"] = "Asignar identificación";
+}
+
+<div class="container mt-4 mb-5">
+    <h2>Asignar identificación oficial</h2>
+    <p class="text-muted">
+        Recién nacido: <strong>@ViewData["NombreBebe"]</strong>.
+        Paciente ID: <strong>@Model.PacienteId</strong>.
+        Se actualizará el mismo expediente, sin crear otro paciente.
+    </p>
+    <div class="alert alert-info">
+        Esta versión admite identificaciones numéricas de 9 a 25 dígitos.
+        Los tipos de documento y validaciones específicas quedan pendientes de HU12.
+    </div>
+
+    <form asp-controller="RecienNacidos" asp-action="AsignarIdentificacion"
+          method="post" asp-antiforgery="true" class="card shadow-sm">
+        <div class="card-body p-4">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <input asp-for="PacienteId" type="hidden" />
+
+            <label asp-for="NumeroIdentificacion" class="form-label">Número de identificación oficial</label>
+            <input asp-for="NumeroIdentificacion" inputmode="numeric" maxlength="25"
+                   autocomplete="off" class="form-control" />
+            <span asp-validation-for="NumeroIdentificacion" class="text-danger"></span>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <a asp-controller="RecienNacidos" asp-action="Index"
+                   class="btn btn-outline-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Guardar identificación</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

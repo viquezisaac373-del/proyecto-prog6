@@ -36,6 +36,15 @@
                         </a>
                     </li>
                 }
+                @if (User.IsInRole("Administrador") || User.IsInRole("Medico") ||
+                     User.IsInRole("Médico") || User.IsInRole("Secretaria"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="RecienNacidos" asp-action="Index">
+                            Recién nacidos
+                        </a>
+                    </li>
+                }
                 <li class="nav-item">
                     <a class="nav-link" asp-controller="Citas" asp-action="Index">
                         Citas

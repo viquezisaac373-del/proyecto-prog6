@@ -1,0 +1,184 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model ProyectoHospital.Models.ViewModels.RecienNacidoFormViewModel
+
+@{
+    ViewData["Title"] = "Registrar recién nacido";
+    var madres = ViewBag.Madres as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
+    var medicos = ViewBag.Medicos as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
+    bool faltaMedico = !medicos.Any();
+    bool faltaMadre = !madres.Any();
+}
+
+<div class="container mt-4 mb-5">
+    <div class="mb-4">
+        <h2>Registrar recién nacido</h2>
+        <p class="text-muted">
+            El bebé tendrá expediente propio; su identificación y su tipo sanguíneo se
+            registrarán inicialmente como <strong>pendiente</strong> y <strong>ND</strong>.
+        </p>
+    </div>
+
+    @if (faltaMedico || faltaMadre)
+    {
+        <div class="alert alert-warning" role="alert">
+            No se puede completar el registro porque faltan
+            @(faltaMadre && faltaMedico ? "pacientes activos y médicos activos" :
+              faltaMadre ? "pacientes activos para seleccionar a la madre" :
+              "médicos activos").
+            Deben existir en la base antes de registrar un nacimiento.
+        </div>
+    }
+
+    <form asp-controller="RecienNacidos" asp-action="Registrar"
+          method="post" asp-antiforgery="true" class="card shadow-sm">
+        <div class="card-body p-4">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <h5 class="mb-3">Responsables del nacimiento</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="MadrePacienteId" class="form-label">Madre (paciente existente)</label>
+                    <select asp-for="MadrePacienteId" asp-items="madres" class="form-select">
+                        <option value="0">Seleccione a la madre...</option>
+                    </select>
+                    <span asp-validation-for="MadrePacienteId" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="EmpleadoId" class="form-label">Médico responsable</label>
+                    <select asp-for="EmpleadoId" asp-items="medicos" class="form-select">
+                        <option value="0">Seleccione un médico...</option>
+                    </select>
+                    <span asp-validation-for="EmpleadoId" class="text-danger"></span>
+                </div>
+            </div>
+
+            <hr class="my-4" />
+            <h5 class="mb-3">Información del bebé</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Nombre" class="form-label">Nombre</label>
+                    <input asp-for="Nombre" class="form-control" maxlength="100" />
+                    <span asp-validation-for="Nombre" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Apellidos" class="form-label">Apellidos</label>
+                    <input asp-for="Apellidos" class="form-control" maxlength="130" />
+                    <span asp-validation-for="Apellidos" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Genero" class="form-label">Género</label>
+                    <select asp-for="Genero" class="form-select">
+                        <option value="">Seleccione...</option>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Femenino">Femenino</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                    <span asp-validation-for="Genero" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="FechaHoraNacimiento" class="form-label">Fecha y hora del nacimiento</label>
+                    <input asp-for="FechaHoraNacimiento" type="datetime-local"
+                           asp-format="{0:yyyy-MM-ddTHH:mm}"
+                           max="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")"
+                           class="form-control" />
+                    <span asp-validation-for="FechaHoraNacimiento" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="TipoParto" class="form-label">Tipo de parto</label>
+                    <select asp-for="TipoParto" class="form-select">
+                        <option value="">Seleccione...</option>
+                        <option value="Vaginal">Vaginal</option>
+                        <option value="Cesarea">Cesárea</option>
+                    </select>
+                    <span asp-validation-for="TipoParto" class="text-danger"></span>
+                </div>
+            </div>
+
+            <hr class="my-4" />
+            <h5 class="mb-3">Contacto y responsable de emergencia</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="NumeroTelefono" class="form-label">Teléfono de contacto</label>
+                    <input asp-for="NumeroTelefono" inputmode="numeric" maxlength="20" class="form-control" />
+                    <span asp-validation-for="NumeroTelefono" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Direccion" class="form-label">Dirección</label>
+                    <input asp-for="Direccion" maxlength="250" class="form-control" />
+                    <span asp-validation-for="Direccion" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ContactoEmergencia" class="form-label">Contacto de emergencia</label>
+                    <input asp-for="ContactoEmergencia" maxlength="100" class="form-control" />
+                    <span asp-validation-for="ContactoEmergencia" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="TelefonoEmergencia" class="form-label">Teléfono de emergencia</label>
+                    <input asp-for="TelefonoEmergencia" inputmode="numeric" maxlength="20" class="form-control" />
+                    <span asp-validation-for="TelefonoEmergencia" class="text-danger"></span>
+                </div>
+            </div>
+
+            <hr class="my-4" />
+            <h5 class="mb-3">Datos clínicos (opcionales si aún no están disponibles)</h5>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="SemanasGestacion" class="form-label">Semanas de gestación</label>
+                    <input asp-for="SemanasGestacion" type="number" min="1" max="255" class="form-control" />
+                    <span asp-validation-for="SemanasGestacion" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="PesoEnGramos" class="form-label">Peso (gramos)</label>
+                    <input asp-for="PesoEnGramos" type="number" min="1" class="form-control" />
+                    <span asp-validation-for="PesoEnGramos" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="TallaCentimetros" class="form-label">Talla (cm)</label>
+                    <input asp-for="TallaCentimetros" type="number" step="0.01" min="0.01" max="9999.99" class="form-control" />
+                    <span asp-validation-for="TallaCentimetros" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Apgar1Min" class="form-label">Apgar al minuto</label>
+                    <input asp-for="Apgar1Min" type="number" min="0" max="10" class="form-control" />
+                    <span asp-validation-for="Apgar1Min" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Apgar5Min" class="form-label">Apgar a los 5 minutos</label>
+                    <input asp-for="Apgar5Min" type="number" min="0" max="10" class="form-control" />
+                    <span asp-validation-for="Apgar5Min" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Respiracion" class="form-label">Respiración</label>
+                    <input asp-for="Respiracion" maxlength="100" class="form-control" />
+                    <span asp-validation-for="Respiracion" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="EstadoSalud" class="form-label">Estado de salud</label>
+                    <input asp-for="EstadoSalud" maxlength="150" class="form-control" />
+                    <span asp-validation-for="EstadoSalud" class="text-danger"></span>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Malformaciones" class="form-label">Hallazgos o malformaciones observadas</label>
+                    <textarea asp-for="Malformaciones" maxlength="400" rows="2" class="form-control"></textarea>
+                    <span asp-validation-for="Malformaciones" class="text-danger"></span>
+                </div>
+                <div class="col-12">
+                    <label asp-for="ObservacionesMedicas" class="form-label">Observaciones médicas</label>
+                    <textarea asp-for="ObservacionesMedicas" maxlength="500" rows="3" class="form-control"></textarea>
+                    <span asp-validation-for="ObservacionesMedicas" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <a asp-controller="RecienNacidos" asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary" disabled="@(faltaMedico || faltaMadre)">
+                    Registrar nacimiento
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
