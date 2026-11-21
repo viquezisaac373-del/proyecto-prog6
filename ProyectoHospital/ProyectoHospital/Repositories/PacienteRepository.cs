@@ -80,8 +80,7 @@ namespace ProyectoHospital.Repositories
         // Registrar un paciente utilizando el procedimiento
         // almacenado usp_RegistrarPaciente.
         // Devuelve el identificador generado por SQL Server.
-        public async Task<int> RegistrarAsync(
-            PacienteFormViewModel paciente)
+        public async Task<int> RegistrarAsync(PacienteFormViewModel paciente,int usuarioId)
         {
             // Protección adicional ante una fecha no proporcionada.
             if (!paciente.FechaNacimiento.HasValue)
@@ -106,8 +105,18 @@ namespace ProyectoHospital.Repositories
 
             await conexion.OpenAsync();
 
-            // Utilizar el procedimiento almacenado existente.
-            await using var comando =
+            // Guardar una posible excepción de esta operación.
+            Exception? errorOperacion = null;
+
+            try
+            {
+                // Asociar la operación con el usuario autenticado.
+                await SqlAuditContext.EstablecerUsuarioAsync(
+                    conexion,
+                    usuarioId);
+
+                // Utilizar el procedimiento almacenado existente.
+                await using var comando =
                 new SqlCommand("dbo.usp_RegistrarPaciente", conexion);
 
             comando.CommandType = CommandType.StoredProcedure;
@@ -185,7 +194,41 @@ namespace ProyectoHospital.Repositories
                     "El procedimiento no devolvió el ID del paciente.");
             }
 
-            return Convert.ToInt32(parametroId.Value);
+                return Convert.ToInt32(parametroId.Value);
+            }
+            catch (Exception ex)
+            {
+                // Conservar la excepción original de la operación.
+                errorOperacion = ex;
+                throw;
+            }
+            finally
+            {
+                try
+                {
+                    await SqlAuditContext.LimpiarUsuarioAsync(conexion);
+                }
+                catch (Exception exLimpieza)
+                {
+                    // Impedir que la conexión se reutilice
+                    // si no se pudo limpiar su contexto.
+                    SqlConnection.ClearPool(conexion);
+
+                    if (errorOperacion is not null)
+                    {
+                        // Conservar el error original y adjuntar
+                        // el problema ocurrido durante la limpieza.
+                        errorOperacion.Data[
+                            "ErrorLimpiezaSessionContext"] = exLimpieza;
+                    }
+                    else
+                    {
+                        // Si la operación no había fallado,
+                        // comunicar el fallo de limpieza.
+                        throw;
+                    }
+                }
+            }
         }
 
         // MÉTODO AUXILIAR
@@ -245,7 +288,9 @@ namespace ProyectoHospital.Repositories
 
         // Actualiza los datos administrativos sin modificar
         // el identificador, la fecha de registro ni el estado.
-        public async Task<bool> ActualizarAsync(PacienteFormViewModel paciente)
+        public async Task<bool> ActualizarAsync(
+            PacienteFormViewModel paciente,
+            int usuarioId)
         {
             if (!paciente.FechaNacimiento.HasValue)
                 throw new ArgumentException("La fecha de nacimiento es obligatoria.");
@@ -268,7 +313,16 @@ namespace ProyectoHospital.Repositories
             await using var conexion = new SqlConnection(_connectionString);
             await conexion.OpenAsync();
 
-            await using var comando = new SqlCommand(sql, conexion);
+            Exception? errorOperacion = null;
+
+            try
+            {
+                // Establecer la identidad antes de modificar al paciente.
+                await SqlAuditContext.EstablecerUsuarioAsync(
+                    conexion,
+                    usuarioId);
+
+                await using var comando = new SqlCommand(sql, conexion);
 
             // Utilizar parámetros evita concatenar datos del usuario
             // directamente en las instrucciones SQL.
@@ -296,25 +350,101 @@ namespace ProyectoHospital.Repositories
             comando.Parameters.Add("@TelefonoEmergencia", SqlDbType.NVarChar, 20).Value =
                 NormalizarTelefono(paciente.TelefonoEmergencia);
 
-            return await comando.ExecuteNonQueryAsync() > 0;
+                return await comando.ExecuteNonQueryAsync() > 0;
+            }
+            catch (Exception ex)
+            {
+                errorOperacion = ex;
+                throw;
+            }
+            finally
+            {
+                try
+                {
+                    await SqlAuditContext.LimpiarUsuarioAsync(conexion);
+                }
+                catch (Exception exLimpieza)
+                {
+                    SqlConnection.ClearPool(conexion);
+
+                    if (errorOperacion is not null)
+                    {
+                        errorOperacion.Data[
+                            "ErrorLimpiezaSessionContext"] = exLimpieza;
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+            }
         }
 
         // Desactivación lógica: conserva al paciente y sus relaciones.
-        public async Task<bool> DesactivarAsync(int id)
+        // Registra la identidad del usuario autenticado para auditoría.
+        public async Task<bool> DesactivarAsync(
+            int id,
+            int usuarioId)
         {
             const string sql = @"
-                UPDATE dbo.Pacientes
-                SET Activo = 0
-                WHERE PacienteId = @Id AND Activo = 1;";
+        UPDATE dbo.Pacientes
+        SET Activo = 0
+        WHERE PacienteId = @Id AND Activo = 1;";
 
-            await using var conexion = new SqlConnection(_connectionString);
+            await using var conexion =
+                new SqlConnection(_connectionString);
+
             await conexion.OpenAsync();
 
-            await using var comando = new SqlCommand(sql, conexion);
-            comando.Parameters.Add("@Id", SqlDbType.Int).Value = id;
+            // Conservar una posible excepción de la operación.
+            Exception? errorOperacion = null;
 
-            return await comando.ExecuteNonQueryAsync() > 0;
+            try
+            {
+                // Establecer la identidad del operador.
+                await SqlAuditContext.EstablecerUsuarioAsync(
+                    conexion,
+                    usuarioId);
+
+                await using var comando =
+                    new SqlCommand(sql, conexion);
+
+                comando.Parameters.Add(
+                    "@Id",
+                    SqlDbType.Int).Value = id;
+
+                return await comando.ExecuteNonQueryAsync() > 0;
+            }
+            catch (Exception ex)
+            {
+                // Conservar el error original de la operación.
+                errorOperacion = ex;
+                throw;
+            }
+            finally
+            {
+                try
+                {
+                    await SqlAuditContext.LimpiarUsuarioAsync(conexion);
+                }
+                catch (Exception exLimpieza)
+                {
+                    // Evitar reutilizar conexiones cuyo contexto
+                    // de auditoría no pudo limpiarse.
+                    SqlConnection.ClearPool(conexion);
+
+                    if (errorOperacion is not null)
+                    {
+                        // Conservar la excepción original.
+                        errorOperacion.Data[
+                            "ErrorLimpiezaSessionContext"] = exLimpieza;
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+            }
         }
-
     }
 }
