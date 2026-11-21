@@ -1,6 +1,6 @@
 # Hospinomenal — Registro de recién nacidos (rama de trabajo)
 
-Estado: **implementación inicial en rama de funcionalidad; pendiente de compilación y pruebas desde Visual Studio**.
+Estado: **implementación ampliada en rama de funcionalidad; pendientes compilación y pruebas de regresión de edición/anulación desde Visual Studio**.
 
 ## Alcance incorporado
 - Formulario específico para nacimientos con madre y médico existentes; campos clínicos opcionales cuando aún no se conocen.
@@ -40,3 +40,30 @@ No aplicar automáticamente los scripts de migración a otras bases. La rama no 
 - Tipos de documento, reglas específicas de cédula de Costa Rica, avisos por identificación pendiente, actualización de auditoría integral y más pruebas forman parte del trabajo posterior.
 - Esta rama proviene de develop y no contiene el código del PR #16 (auditoría del módulo de pacientes). El repositorio de recién nacidos establece su contexto SQL de forma independiente para la prueba.
 - Nuevos requerimientos en las historias de UTC Agile: pendiente de incorporación posterior; no se modificaron historias desde esta rama.
+
+
+## Ampliación para revisión del lunes 23 de noviembre de 2026
+
+El módulo incluye ahora, además de registrar e identificar al recién nacido:
+- Listado histórico **de todos los nacimientos** (identificados, pendientes y anulados).
+- Edición de datos administrativos del bebé y datos clínicos del nacimiento en una transacción.
+- Anulación lógica de **Nacimientos.Activo**, exclusiva del rol Administrador, con motivo obligatorio. **No** desactiva el registro del bebé en Pacientes.
+- Auditoría explícita de cambios y anulaciones en dbo.BitacoraAuditoria con UsuarioId de la sesión SQL. La actualización de Pacientes también pasa por su trigger de auditoría.
+- Campos de filiación (madre y médico), número de identificación y tipo sanguíneo no son editables desde este formulario.
+- No requiere nueva migración SQL: utiliza columnas existentes de Pacientes, Nacimientos y BitacoraAuditoria.
+
+### Revisión local pendiente antes de la demostración
+1. Git Bash, sobre `feature/registro-recien-nacidos`: `git fetch origin`; `git merge --ff-only origin/feature/registro-recien-nacidos`; `dotnet build ProyectoHospital/ProyectoHospital.slnx`.
+2. Entrar como Administrador a Hospinomenal con User Secrets apuntando a la base local de integración.
+3. Listado: comprobar que el recién nacido con identificación ya asignada sigue visible, igual que los pendientes.
+4. Edición: abrir el nacimiento de prueba, cambiar un dato clínico no sensible (p. ej. peso ficticio 3200→3250 g), guardar. Comprobar cambios de Nacimientos, mismo PacienteId, y BitacoraAuditoria UPDATE con UsuarioId.
+5. Anulación: **usar un nacimiento ficticio distinto** o únicamente un registro creado para anular. Indicar razón explícita. Comprobar Nacimientos.Activo=0, Pacientes.Activo inalterado, evento DESACTIVAR en la bitácora, y fila visible con estado Anulado.
+6. Seguridad: el botón Anular se muestra solo a Administrador; el controlador también exige ese rol y el token antifalsificación para los POST.
+7. No aplicar escrituras en la BD principal ni crear datos reales para las pruebas.
+8. Las pruebas de compilación/ejecución no se han ejecutado en el equipo del desarrollador por este asistente. Los resultados del MVC anteriores solo cubren alta e identificación, no esta ampliación.
+
+### Limitaciones deliberadas
+- La anulación de un nacimiento exige políticas clínicas y de auditoría del proyecto antes de utilizarse con expedientes reales; aquí se plantea como anulación administrativa lógica de un registro de prueba.
+- No implementa edición de madre/médico, corrección de filiación, reactivación, aprobación clínica, política de doble validación ni historial médico por episodio.
+- PR #17 sigue en borrador. La rama se basó originalmente en un develop anterior a la integración de HU13; habrá que resolver cualquier conflicto de integración con cuidado.
+- Las nuevas reglas/requerimientos en UTC Agile continúan pendientes de incorporación.
