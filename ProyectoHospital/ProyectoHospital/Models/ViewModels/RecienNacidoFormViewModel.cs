@@ -58,7 +58,11 @@ namespace ProyectoHospital.Models.ViewModels
         [Range(1, int.MaxValue, ErrorMessage = "El peso debe ser mayor que cero.")]
         public int? PesoEnGramos { get; set; }
 
+        // Parsear los límites con cultura invariante evita FormatException
+        // en equipos cuya configuración regional usa coma decimal.
         [Range(typeof(decimal), "0.01", "9999.99",
+            ParseLimitsInInvariantCulture = true,
+            ConvertValueInInvariantCulture = true,
             ErrorMessage = "La talla debe ser mayor que cero.")]
         public decimal? TallaCentimetros { get; set; }
 
