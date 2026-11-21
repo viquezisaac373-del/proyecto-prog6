@@ -1,0 +1,44 @@
+@model ProyectoHospital.Models.ViewModels.AnularNacimientoViewModel
+
+@{
+    ViewData["Title"] = "Anular nacimiento";
+}
+
+<div class="container mt-4 mb-5">
+    <h2>Anular registro de nacimiento #@Model.NacimientoId</h2>
+    <div class="alert alert-warning" role="alert">
+        <strong>Atención:</strong> esta operación marca el nacimiento como inactivo
+        y lo conserva en el historial. <strong>No elimina ni desactiva</strong>
+        el expediente del paciente. La operación queda auditada con su justificación.
+    </div>
+
+    @if (ViewData["NombreBebe"] is string nombre)
+    {
+        <p class="text-muted">Recién nacido: <strong>@nombre</strong>.</p>
+    }
+
+    <form asp-action="Anular" asp-route-id="@Model.NacimientoId"
+          method="post" asp-antiforgery="true" class="card shadow-sm">
+        <div class="card-body p-4">
+            <input asp-for="NacimientoId" type="hidden" />
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <label asp-for="Motivo" class="form-label">Justificación obligatoria</label>
+            <textarea asp-for="Motivo" maxlength="300" rows="3"
+                      class="form-control" required
+                      placeholder="Explique por qué se anula el registro de nacimiento."></textarea>
+            <span asp-validation-for="Motivo" class="text-danger"></span>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-danger">
+                    Confirmar anulación
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
