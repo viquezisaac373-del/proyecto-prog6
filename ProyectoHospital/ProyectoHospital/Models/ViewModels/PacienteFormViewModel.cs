@@ -53,10 +53,12 @@ namespace ProyectoHospital.Models.ViewModels
         public string Genero { get; set; } = "";
 
         // TIPO DE SANGRE
-        // ND significa No determinado.
+        // ND = No determinado (valor técnico provisional, NO es SQL NULL).
+        // RHN = fenotipo Rh nulo, distinto de Rh negativo y de ND.
+        // Debe utilizarse únicamente con tipificación de laboratorio confirmada.
         [Required(ErrorMessage = "Seleccione un tipo de sangre.")]
         [RegularExpression(
-            @"^(A\+|A-|B\+|B-|AB\+|AB-|O\+|O-|ND)$",
+            @"^(A\+|A-|B\+|B-|AB\+|AB-|O\+|O-|ND|RHN)$",
             ErrorMessage = "Seleccione un tipo de sangre válido.")]
         public string TipoSangre { get; set; } = "";
 
