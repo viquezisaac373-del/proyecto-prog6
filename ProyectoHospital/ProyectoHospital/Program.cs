@@ -17,7 +17,10 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     ProyectoHospital.Repositories.UsuarioRepository>();
 
-// Flujo especializado de recién nacidos (SQL de integración).
+builder.Services.AddScoped<
+    ProyectoHospital.Repositories.BitacoraRepository>();
+
+// Alta, consulta y gestión de nacimientos.
 builder.Services.AddScoped<
     ProyectoHospital.Repositories.RecienNacidoRepository>();
 
