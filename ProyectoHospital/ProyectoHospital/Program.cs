@@ -17,6 +17,9 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     ProyectoHospital.Repositories.UsuarioRepository>();
 
+builder.Services.AddScoped<
+    ProyectoHospital.Repositories.BitacoraRepository>();
+
 // PasswordHasher de ASP.NET Core Identity (PBKDF2, versión Identity V3).
 // Se mantiene el mismo formato verificable al actualizar su costo.
 builder.Services.Configure<PasswordHasherOptions>(options =>
