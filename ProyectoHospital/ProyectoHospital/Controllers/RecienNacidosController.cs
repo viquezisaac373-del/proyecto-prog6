@@ -26,8 +26,8 @@ namespace ProyectoHospital.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var pendientes = await _repositorio.ListarPendientesAsync();
-            return View(pendientes);
+            var nacimientos = await _repositorio.ListarTodosAsync();
+            return View(nacimientos);
         }
 
         [HttpGet]
@@ -160,6 +160,128 @@ namespace ProyectoHospital.Controllers
             }
 
             return await MostrarIdentificacionAsync(modelo);
+        }
+
+        // Edición de datos administrativos del bebé y detalles del nacimiento.
+        // No permite cambiar madre/médico, identificación ni tipo sanguíneo.
+        [HttpGet]
+        [Authorize(Roles = "Administrador,Medico,Médico")]
+        public async Task<IActionResult> Editar(int id)
+        {
+            if (id <= 0)
+                return BadRequest();
+
+            var modelo = await _repositorio.ObtenerParaEditarAsync(id);
+            return modelo is null ? NotFound() : View(modelo);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Administrador,Medico,Médico")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Editar(int id, EditarRecienNacidoViewModel modelo)
+        {
+            if (id <= 0 || modelo.NacimientoId != id)
+                return BadRequest();
+
+            if (!ModelState.IsValid)
+                return View(modelo);
+
+            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier),
+                    out int usuarioId) || usuarioId <= 0)
+                return Forbid();
+
+            try
+            {
+                await _repositorio.EditarAsync(modelo, usuarioId);
+                TempData["MensajeExito"] =
+                    $"Nacimiento #{id} y datos administrativos del bebé actualizados correctamente.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (SqlException ex) when (ex.Number == 51951)
+            {
+                ModelState.AddModelError(string.Empty,
+                    "El nacimiento ya no está disponible para edición. Actualice el listado.");
+            }
+            catch (SqlException ex) when (ex.Number == 51952)
+            {
+                ModelState.AddModelError(nameof(modelo.FechaHoraNacimiento),
+                    "La fecha y hora del nacimiento no pueden ser futuras.");
+            }
+            catch (SqlException ex)
+            {
+                _logger.LogError(ex, "Error SQL al editar nacimiento {NacimientoId}.", id);
+                ModelState.AddModelError(string.Empty,
+                    "No se pudo guardar la edición. Revise los datos.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al editar nacimiento {NacimientoId}.", id);
+                ModelState.AddModelError(string.Empty, "No fue posible completar la edición.");
+            }
+
+            return View(modelo);
+        }
+
+        // La anulación es exclusiva del administrador, exige justificación,
+        // mantiene el expediente del paciente y queda en la bitácora.
+        [HttpGet]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> Anular(int id)
+        {
+            if (id <= 0)
+                return BadRequest();
+
+            var nacimientos = await _repositorio.ListarTodosAsync();
+            var nacimiento = nacimientos.FirstOrDefault(n => n.NacimientoId == id);
+            if (nacimiento is null || !nacimiento.NacimientoActivo)
+                return NotFound();
+
+            ViewData["NombreBebe"] = nacimiento.NombreCompleto;
+            ViewData["PacienteId"] = nacimiento.PacienteId;
+            return View(new AnularNacimientoViewModel { NacimientoId = id });
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Administrador")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Anular(int id, AnularNacimientoViewModel modelo)
+        {
+            if (id <= 0 || modelo.NacimientoId != id)
+                return BadRequest();
+
+            if (!ModelState.IsValid)
+                return View(modelo);
+
+            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier),
+                    out int usuarioId) || usuarioId <= 0)
+                return Forbid();
+
+            try
+            {
+                await _repositorio.AnularAsync(id, modelo.Motivo, usuarioId);
+                TempData["MensajeExito"] =
+                    $"Nacimiento #{id} anulado. El expediente del paciente permanece conservado.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (SqlException ex) when (ex.Number == 51953)
+            {
+                ModelState.AddModelError(string.Empty,
+                    "El nacimiento ya fue anulado o no existe.");
+            }
+            catch (SqlException ex)
+            {
+                _logger.LogError(ex, "Error SQL al anular nacimiento {NacimientoId}.", id);
+                ModelState.AddModelError(string.Empty,
+                    "No fue posible anular el nacimiento.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al anular nacimiento {NacimientoId}.", id);
+                ModelState.AddModelError(string.Empty,
+                    "No fue posible completar la operación.");
+            }
+
+            return View(modelo);
         }
 
         private async Task<IActionResult> MostrarFormularioAsync(RecienNacidoFormViewModel modelo)
