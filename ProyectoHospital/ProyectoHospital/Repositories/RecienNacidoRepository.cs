@@ -312,6 +312,91 @@ namespace ProyectoHospital.Repositories
         }
 
         /// <summary>
+        /// Recupera el nombre de un RN cuyo grupo sanguíneo sigue ND.
+        /// </summary>
+        public async Task<string?> ObtenerNombrePendienteTipificacionAsync(int pacienteId)
+        {
+            const string sql = @"
+                SELECT TOP (1) CONCAT(p.Nombre, N' ', p.Apellidos)
+                FROM dbo.Pacientes AS p
+                INNER JOIN dbo.Nacimientos AS n ON n.BebePacienteId = p.PacienteId
+                WHERE p.PacienteId = @PacienteId
+                  AND p.Activo = 1 AND n.Activo = 1
+                  AND p.TipoSangre = N'ND';";
+            await using var conexion = new SqlConnection(_connectionString);
+            await conexion.OpenAsync();
+            await using var comando = new SqlCommand(sql, conexion);
+            comando.Parameters.Add("@PacienteId", SqlDbType.Int).Value = pacienteId;
+            return await comando.ExecuteScalarAsync() as string;
+        }
+
+        /// <summary>
+        /// Completa la tipificación de un RN: solo ND -> valor confirmado.
+        /// El trigger de Pacientes registra UPDATE; el segundo evento anota
+        /// la referencia de laboratorio y la identidad responsable.
+        /// </summary>
+        public Task<bool> CompletarTipoSangreAsync(
+            CompletarTipoSangreRecienNacidoViewModel modelo, int usuarioId)
+        {
+            return EjecutarConAuditoriaAsync(usuarioId, async conexion =>
+            {
+                const string sql = @"
+                    SET NOCOUNT ON;
+                    UPDATE dbo.Pacientes
+                    SET TipoSangre = @TipoSangre
+                    WHERE PacienteId = @PacienteId
+                      AND TipoSangre = N'ND' AND Activo = 1
+                      AND EXISTS (
+                          SELECT 1 FROM dbo.Nacimientos AS n
+                          WHERE n.BebePacienteId = @PacienteId
+                            AND n.Activo = 1
+                      );
+
+                    IF @@ROWCOUNT <> 1
+                        THROW 51981, N'El nacimiento no tiene tipificacion pendiente.', 1;
+
+                    INSERT INTO dbo.BitacoraAuditoria
+                        (UsuarioId, Accion, Tabla_Modificada, RegistroId,
+                         VAnteriores, VNuevos, Objeto)
+                    VALUES
+                        (TRY_CONVERT(INT, SESSION_CONTEXT(N'UsuarioId')),
+                         N'CONFIRMACION_TIPIFICACION', N'Pacientes',
+                         CONVERT(NVARCHAR(100), @PacienteId),
+                         N'{""TipoSangre"":""ND""}',
+                         (SELECT @TipoSangre AS TipoSangre,
+                                 @Referencia AS ReferenciaLaboratorio
+                          FOR JSON PATH, WITHOUT_ARRAY_WRAPPER),
+                         N'RecienNacidos');
+                ";
+
+                await using var transaccion =
+                    (SqlTransaction)await conexion.BeginTransactionAsync();
+                try
+                {
+                    await using var comando = new SqlCommand(sql, conexion, transaccion);
+                    comando.Parameters.Add("@PacienteId", SqlDbType.Int).Value =
+                        modelo.PacienteId;
+                    comando.Parameters.Add("@TipoSangre", SqlDbType.NVarChar, 3).Value =
+                        modelo.TipoSangre;
+                    comando.Parameters.Add("@Referencia", SqlDbType.NVarChar, 200).Value =
+                        modelo.ReferenciaLaboratorio.Trim();
+                    await comando.ExecuteNonQueryAsync();
+                    await transaccion.CommitAsync();
+                    return true;
+                }
+                catch
+                {
+                    try { await transaccion.RollbackAsync(); }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error al revertir confirmación de tipo sanguíneo.");
+                    }
+                    throw;
+                }
+            });
+        }
+
+        /// <summary>
         /// Recupera los datos editables de un nacimiento activo y su expediente.
         /// Las relaciones madre/médico son informativas y no se modifican aquí.
         /// </summary>
