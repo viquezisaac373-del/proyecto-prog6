@@ -53,3 +53,44 @@
 **Criterios de aceptación:** RN-QA-01 a RN-QA-15, luego de la validación del alcance por el PO.  
 **Estado a registrar:** Encontrado y con corrección propuesta en rama; **no terminado ni aprobado por QA**.  
 **Implicación Scrum:** requiere estimación, dependencia de SQL, criterios del PO, y decisión de incorporación al Sprint 3 o al siguiente; no sumar puntos retrospectivos sin acuerdo.
+
+## Ajuste de sexo registrado al nacer (21/11/2026)
+
+Observación de QA: el selector decía "Género" y ofrecía "Otro". Se propone distinguir
+**sexo registrado al nacer**, sin inferir identidad de género ni diagnóstico.
+
+- Formulario de alta de RN: **Masculino / Femenino / Indeterminado
+  (pendiente de valoración clínica)**.
+- El valor guardado en `Pacientes.Genero` para la última opción es
+  **`Indeterminado`**, no `Otro`. Es una adaptación provisional del esquema
+  histórico; en una refactorización futura conviene separar `SexoAlNacer`
+  de los datos administrativos de género.
+- Edición de RN: dato de solo lectura. Los antiguos `Otro` siguen mostrándose
+  como `Otro (dato histórico; requiere revisión)`; no se reinterpretan.
+- El POST de registro rechaza `Otro` incluso cuando alguien lo envía de forma
+  manipulada. Las ediciones antiguas pueden seguir leyendo ese valor.
+- La vista de pacientes acepta `Indeterminado` al editar datos administrativos
+  de un RN existente, pero no cambia el dato en el mantenimiento ordinario.
+
+### Dependencia de SQL Server
+
+Se incluyó la migración
+`ProyectoHospital/database/migrations/20261121_RN_SexoIndeterminado_SOLO_INTEGRACION.sql`.
+Su ejecución es **manual**, exclusivamente con `Hospital_DB4_Integracion`
+seleccionada y tras revisión por José Steven. Solo amplía
+`CK_Pacientes_Genero` y conserva `Otro`; nunca debe aplicarse a
+`Hospital_DB4` principal. Una instalación nueva obtiene el mismo catálogo
+del script base actualizado, sin reejecutarlo en una base existente.
+
+**Pruebas adicionales RN-QA-16 a RN-QA-19:**
+
+- RN-QA-16: verificar que el alta ofrece Indeterminado y NO Otro.
+- RN-QA-17: comprobar que un RN Indeterminado se guarda, consulta y edita sin
+  cambiar involuntariamente el valor; exige migración SQL aplicada.
+- RN-QA-18: POST manipulado con `Genero=Otro` en nueva alta: rechazo.
+- RN-QA-19: verificar que los pacientes históricos con `Otro` persisten y
+  pueden consultarse sin alteración.
+
+**Estado:** código propuesto, compilación y pruebas funcionales de esta adición
+pendientes. El Product Owner debe aprobar terminología y proceso de
+confirmación/corrección clínica posterior.
