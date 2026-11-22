@@ -111,13 +111,21 @@
 
                         <label asp-for="NumeroIdentificacion"
                                class="form-label">
-                            Identificación
+                            Cédula costarricense (9 dígitos)
                         </label>
 
                         <input asp-for="NumeroIdentificacion"
                                class="form-control"
                                inputmode="numeric"
-                               maxlength="25" readonly="@esEdicion" />
+                               maxlength="@(esEdicion ? 25 : 9)"
+                               pattern="@(esEdicion ? null : "[0-9]{9}")"
+                               oninput="@(esEdicion ? null : "this.value=this.value.replace(/[^0-9]/g, '').slice(0, 9)")"
+                               readonly="@esEdicion" />
+                        @if (esEdicion)
+                        {
+                            <div class="form-text">La identificación histórica se conserva.
+                                Su corrección requiere un procedimiento autorizado.</div>
+                        }
 
                         <span asp-validation-for="NumeroIdentificacion"
                               class="text-danger"></span>
