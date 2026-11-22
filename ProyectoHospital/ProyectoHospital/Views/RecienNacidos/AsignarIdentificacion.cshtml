@@ -12,8 +12,8 @@
         Se actualizará el mismo expediente, sin crear otro paciente.
     </p>
     <div class="alert alert-info">
-        Esta versión admite identificaciones numéricas de 9 a 25 dígitos.
-        Los tipos de documento y validaciones específicas quedan pendientes de HU12.
+        En esta etapa solo se admite cédula nacional costarricense de 9 dígitos.
+        Los otros documentos requieren un módulo específico que aún no está integrado.
     </div>
 
     <form asp-controller="RecienNacidos" asp-action="AsignarIdentificacion"
@@ -22,9 +22,11 @@
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
             <input asp-for="PacienteId" type="hidden" />
 
-            <label asp-for="NumeroIdentificacion" class="form-label">Número de identificación oficial</label>
-            <input asp-for="NumeroIdentificacion" inputmode="numeric" maxlength="25"
-                   autocomplete="off" class="form-control" />
+            <label asp-for="NumeroIdentificacion" class="form-label">Cédula costarricense (9 dígitos)</label>
+            <input asp-for="NumeroIdentificacion" type="text" inputmode="numeric"
+                   pattern="[0-9]{9}" minlength="9" maxlength="9"
+                   autocomplete="off" class="form-control"
+                   oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 9)" />
             <span asp-validation-for="NumeroIdentificacion" class="text-danger"></span>
 
             <div class="d-flex justify-content-end gap-2 mt-4">
