@@ -30,6 +30,13 @@ namespace ProyectoHospital.Models.ViewModels
             ErrorMessage = "Seleccione un valor válido para el sexo registrado al nacer.")]
         public string Genero { get; set; } = "";
 
+        // ND representa pendiente de tipificación; nunca equivale a Rh nulo.
+        // Solo consignar un grupo confirmado mediante evaluación de laboratorio.
+        [Required(ErrorMessage = "Seleccione el estado del tipo sanguíneo.")]
+        [RegularExpression(@"^(ND|A\+|A-|B\+|B-|AB\+|AB-|O\+|O-|RHN)$",
+            ErrorMessage = "Seleccione un tipo sanguíneo admitido.")]
+        public string TipoSangre { get; set; } = "ND";
+
         [Required(ErrorMessage = "El teléfono es obligatorio.")]
         [RegularExpression(@"^[0-9]{8,20}$",
             ErrorMessage = "Ingrese de 8 a 20 dígitos sin espacios.")]
