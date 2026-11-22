@@ -135,7 +135,7 @@
                         @if (esEdicion)
                         {
                             <input type="text" class="form-control" readonly
-                                   value="@Model.FechaNacimiento?.ToString("yyyy-MM-dd")" />
+                                   value="@(Model.FechaNacimiento?.ToString("yyyy-MM-dd"))" />
                             <input asp-for="FechaNacimiento" type="hidden" />
                         }
                         else
