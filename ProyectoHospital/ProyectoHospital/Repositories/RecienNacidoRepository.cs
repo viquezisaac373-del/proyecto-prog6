@@ -39,7 +39,7 @@ namespace ProyectoHospital.Repositories
                        CONCAT(Nombre, N' ', Apellidos, N' (',
                               COALESCE(Numero_Identificacion, N'Sin identificación'), N')')
                 FROM dbo.Pacientes
-                WHERE Activo = 1
+                WHERE Activo = 1 AND Genero = N'Femenino'
                 ORDER BY Apellidos, Nombre, PacienteId;";
 
             var opciones = new List<OpcionRegistro>();
@@ -52,6 +52,27 @@ namespace ProyectoHospital.Repositories
                 opciones.Add(new OpcionRegistro(lector.GetInt32(0), lector.GetString(1)));
 
             return opciones;
+        }
+
+        /// <summary>
+        /// Validación de la selección de madre también del lado del servidor.
+        /// La regla por género es provisional hasta registrar explícitamente
+        /// la relación de persona gestante (criterio pendiente del PO).
+        /// </summary>
+        public async Task<bool> EsMadreSeleccionableAsync(int pacienteId)
+        {
+            const string sql = @"
+                SELECT COUNT(1)
+                FROM dbo.Pacientes
+                WHERE PacienteId = @PacienteId
+                  AND Activo = 1
+                  AND Genero = N'Femenino';";
+
+            await using var conexion = new SqlConnection(_connectionString);
+            await conexion.OpenAsync();
+            await using var comando = new SqlCommand(sql, conexion);
+            comando.Parameters.Add("@PacienteId", SqlDbType.Int).Value = pacienteId;
+            return Convert.ToInt32(await comando.ExecuteScalarAsync()) == 1;
         }
 
         public async Task<List<OpcionRegistro>> ListarMedicosAsync()
