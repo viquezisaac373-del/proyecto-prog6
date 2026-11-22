@@ -71,13 +71,17 @@
                     <span asp-validation-for="Apellidos" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
-                    <label asp-for="Genero" class="form-label">Género</label>
+                    <label asp-for="Genero" class="form-label">Sexo registrado al nacer</label>
                     <select asp-for="Genero" class="form-select">
                         <option value="">Seleccione...</option>
                         <option value="Masculino">Masculino</option>
                         <option value="Femenino">Femenino</option>
-                        <option value="Otro">Otro</option>
+                        <option value="Indeterminado">Indeterminado (pendiente de valoración clínica)</option>
                     </select>
+                    <div class="form-text">
+                        Registre el dato documentado por el personal clínico.
+                        «Indeterminado» no es una identidad de género ni un diagnóstico.
+                    </div>
                     <span asp-validation-for="Genero" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
