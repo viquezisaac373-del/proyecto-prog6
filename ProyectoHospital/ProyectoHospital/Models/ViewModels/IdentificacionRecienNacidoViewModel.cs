@@ -8,9 +8,10 @@ namespace ProyectoHospital.Models.ViewModels
         public int PacienteId { get; set; }
 
         [Required(ErrorMessage = "La identificación oficial es obligatoria.")]
-        [StringLength(25)]
-        [RegularExpression(@"^(?!0+$)[0-9]{9,25}$",
-            ErrorMessage = "Ingrese de 9 a 25 dígitos; no se permiten solamente ceros.")]
+        [StringLength(9, MinimumLength = 9,
+            ErrorMessage = "La cédula costarricense debe contener exactamente 9 dígitos.")]
+        [RegularExpression(@"^(?!0{9}$)[0-9]{9}$",
+            ErrorMessage = "La cédula debe contener exactamente 9 dígitos numéricos y no ser solo ceros.")]
         public string NumeroIdentificacion { get; set; } = "";
     }
 }
