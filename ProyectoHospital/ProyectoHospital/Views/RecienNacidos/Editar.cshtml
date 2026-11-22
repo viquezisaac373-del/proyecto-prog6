@@ -7,20 +7,21 @@
 <div class="container mt-4 mb-5">
     <h2>Editar nacimiento #@Model.NacimientoId</h2>
     <p class="text-muted">
-        Paciente #@Model.PacienteId. Se conservan la identificación, el tipo sanguíneo
-        y las relaciones con la madre y el médico. La fecha de nacimiento del
-        expediente se actualizará si se corrige la fecha del parto.
+        Paciente #@Model.PacienteId. Se conservan identificación, género, fecha y
+        hora de nacimiento, tipo sanguíneo, madre y médico. Las correcciones
+        excepcionales de estos datos deben autorizarse y auditarse por separado.
     </p>
     <div class="alert alert-info">
         Esta edición modifica datos administrativos del bebé y detalles del nacimiento.
         Los cambios quedarán auditados. No modifica el expediente de la madre ni del médico.
     </div>
 
-    <form asp-controller="RecienNacidos" asp-action="Editar"
+    <form id="formRN" asp-controller="RecienNacidos" asp-action="Editar"
           asp-route-id="@Model.NacimientoId" method="post"
           asp-antiforgery="true" class="card shadow-sm">
         <div class="card-body p-4">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <div id="mensajeTelefonosRN" class="alert alert-warning d-none" role="alert"></div>
             <input asp-for="NacimientoId" type="hidden" />
             <input asp-for="PacienteId" type="hidden" />
             <input asp-for="MadrePacienteId" type="hidden" />
@@ -45,19 +46,21 @@
                     <span asp-validation-for="Apellidos" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
-                    <label asp-for="Genero" class="form-label">Género</label>
-                    <select asp-for="Genero" class="form-select">
-                        <option value="Masculino">Masculino</option>
-                        <option value="Femenino">Femenino</option>
-                        <option value="Otro">Otro</option>
-                    </select>
+                    <label asp-for="Genero" class="form-label">Sexo registrado al nacer</label>
+                    <input type="text" class="form-control" readonly
+                           value="@(Model.Genero == "Indeterminado"
+                               ? "Indeterminado (pendiente de valoración clínica)"
+                               : Model.Genero == "Otro"
+                                   ? "Otro (dato histórico; requiere revisión)"
+                                   : Model.Genero)" />
+                    <input asp-for="Genero" type="hidden" />
                     <span asp-validation-for="Genero" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="FechaHoraNacimiento" class="form-label">Fecha y hora del nacimiento</label>
-                    <input asp-for="FechaHoraNacimiento" type="datetime-local"
-                           asp-format="{0:yyyy-MM-ddTHH:mm}"
-                           max="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" class="form-control" />
+                    <input type="text" class="form-control" readonly
+                           value="@(Model.FechaHoraNacimiento?.ToString("yyyy-MM-dd HH:mm"))" />
+                    <input asp-for="FechaHoraNacimiento" type="hidden" />
                     <span asp-validation-for="FechaHoraNacimiento" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
@@ -75,7 +78,10 @@
             <div class="row g-3">
                 <div class="col-md-6">
                     <label asp-for="NumeroTelefono" class="form-label">Teléfono</label>
-                    <input asp-for="NumeroTelefono" maxlength="20" inputmode="numeric" class="form-control" />
+                    <input id="telefonoVisibleRN" type="tel" class="form-control"
+                           inputmode="tel" autocomplete="tel" required />
+                    <input asp-for="NumeroTelefono" type="hidden" />
+                    <div id="errorTelefonoRN" class="text-danger small mt-1" aria-live="polite"></div>
                     <span asp-validation-for="NumeroTelefono" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
@@ -90,7 +96,10 @@
                 </div>
                 <div class="col-md-6">
                     <label asp-for="TelefonoEmergencia" class="form-label">Teléfono de emergencia</label>
-                    <input asp-for="TelefonoEmergencia" maxlength="20" inputmode="numeric" class="form-control" />
+                    <input id="emergenciaVisibleRN" type="tel" class="form-control"
+                           inputmode="tel" required />
+                    <input asp-for="TelefonoEmergencia" type="hidden" />
+                    <div id="errorEmergenciaRN" class="text-danger small mt-1" aria-live="polite"></div>
                     <span asp-validation-for="TelefonoEmergencia" class="text-danger"></span>
                 </div>
             </div>
@@ -148,7 +157,8 @@
 
             <div class="d-flex justify-content-end gap-2 mt-4">
                 <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
-                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                <button id="btnGuardarRN" type="submit" class="btn btn-primary"
+                        data-permitido="true" disabled>Guardar cambios</button>
             </div>
         </div>
     </form>
@@ -156,4 +166,5 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <partial name="_TelefonosRecienNacidos" />
 }

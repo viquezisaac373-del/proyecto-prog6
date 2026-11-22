@@ -286,29 +286,23 @@ namespace ProyectoHospital.Repositories
             };
         }
 
-        // Actualiza los datos administrativos sin modificar
-        // el identificador, la fecha de registro ni el estado.
+        // Mantenimiento ordinario: no corrige identidad, género, fecha de
+        // nacimiento ni tipo sanguíneo. Esos cambios requieren un proceso
+        // excepcional autorizado y una justificación trazable.
         public async Task<bool> ActualizarAsync(
             PacienteFormViewModel paciente,
             int usuarioId)
         {
-            if (!paciente.FechaNacimiento.HasValue)
-                throw new ArgumentException("La fecha de nacimiento es obligatoria.");
-
             const string sql = @"
                 UPDATE dbo.Pacientes
-                SET Numero_Identificacion = @Identificacion,
-                    Nombre = @Nombre,
+                SET Nombre = @Nombre,
                     Apellidos = @Apellidos,
-                    Fecha_Nacimiento = @Fecha,
-                    Genero = @Genero,
-                    TipoSangre = @Sangre,
                     Numero_Telefono = @Telefono,
                     Correo = @Correo,
                     Direccion = @Direccion,
                     ContactoEmergencia = @Contacto,
                     TelefonoEmergencia = @TelefonoEmergencia
-                WHERE PacienteId = @Id;";
+                WHERE PacienteId = @Id AND Activo = 1;";
 
             await using var conexion = new SqlConnection(_connectionString);
             await conexion.OpenAsync();
@@ -327,18 +321,10 @@ namespace ProyectoHospital.Repositories
             // Utilizar parámetros evita concatenar datos del usuario
             // directamente en las instrucciones SQL.
             comando.Parameters.Add("@Id", SqlDbType.Int).Value = paciente.PacienteId;
-            comando.Parameters.Add("@Identificacion", SqlDbType.NVarChar, 25).Value =
-                paciente.NumeroIdentificacion.Trim();
             comando.Parameters.Add("@Nombre", SqlDbType.NVarChar, 100).Value =
                 paciente.Nombre.Trim();
             comando.Parameters.Add("@Apellidos", SqlDbType.NVarChar, 130).Value =
                 paciente.Apellidos.Trim();
-            comando.Parameters.Add("@Fecha", SqlDbType.Date).Value =
-                paciente.FechaNacimiento.Value.Date;
-            comando.Parameters.Add("@Genero", SqlDbType.NVarChar, 15).Value =
-                paciente.Genero.Trim();
-            comando.Parameters.Add("@Sangre", SqlDbType.NVarChar, 3).Value =
-                paciente.TipoSangre.Trim();
             comando.Parameters.Add("@Telefono", SqlDbType.NVarChar, 20).Value =
                 NormalizarTelefono(paciente.NumeroTelefono);
             comando.Parameters.Add("@Correo", SqlDbType.NVarChar, 200).Value =

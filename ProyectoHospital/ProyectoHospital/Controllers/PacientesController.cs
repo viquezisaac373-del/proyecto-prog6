@@ -50,6 +50,12 @@ namespace ProyectoHospital.Controllers
         public async Task<IActionResult> Create(
             PacienteFormViewModel modelo)
         {
+            // ND se reserva al flujo especializado de recién nacidos.
+            // No basta ocultarlo en el selector: se valida también en POST.
+            if (modelo.TipoSangre == "ND")
+                ModelState.AddModelError(nameof(modelo.TipoSangre),
+                    "Para el alta general debe seleccionar una tipificación registrada.");
+
             // Validar los datos recibidos antes de enviarlos a SQL Server.
             if (!ModelState.IsValid)
             {

@@ -29,12 +29,17 @@
         </div>
     }
 
-    <form asp-controller="RecienNacidos" asp-action="Registrar"
+    <form id="formRN" asp-controller="RecienNacidos" asp-action="Registrar"
           method="post" asp-antiforgery="true" class="card shadow-sm">
         <div class="card-body p-4">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <div id="mensajeTelefonosRN" class="alert alert-warning d-none" role="alert"></div>
 
             <h5 class="mb-3">Responsables del nacimiento</h5>
+            <p class="small text-muted">
+                Solo se muestran pacientes habilitados por la regla provisional de selección de madre.
+                Las correcciones excepcionales de filiación requieren validación administrativa.
+            </p>
             <div class="row g-3">
                 <div class="col-md-6">
                     <label asp-for="MadrePacienteId" class="form-label">Madre (paciente existente)</label>
@@ -66,21 +71,28 @@
                     <span asp-validation-for="Apellidos" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
-                    <label asp-for="Genero" class="form-label">Género</label>
+                    <label asp-for="Genero" class="form-label">Sexo registrado al nacer</label>
                     <select asp-for="Genero" class="form-select">
                         <option value="">Seleccione...</option>
                         <option value="Masculino">Masculino</option>
                         <option value="Femenino">Femenino</option>
-                        <option value="Otro">Otro</option>
+                        <option value="Indeterminado">Indeterminado (pendiente de valoración clínica)</option>
                     </select>
+                    <div class="form-text">
+                        Registre el dato documentado por el personal clínico.
+                        «Indeterminado» no es una identidad de género ni un diagnóstico.
+                    </div>
                     <span asp-validation-for="Genero" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="FechaHoraNacimiento" class="form-label">Fecha y hora del nacimiento</label>
                     <input asp-for="FechaHoraNacimiento" type="datetime-local"
                            asp-format="{0:yyyy-MM-ddTHH:mm}"
+                           min="@DateTime.Now.AddDays(-30).ToString("yyyy-MM-ddTHH:mm")"
                            max="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")"
                            class="form-control" />
+                    <div class="form-text">El registro ordinario acepta los últimos 30 días.
+                        Los registros históricos se tramitarán por una vía diferente (regla provisional).</div>
                     <span asp-validation-for="FechaHoraNacimiento" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
@@ -99,7 +111,10 @@
             <div class="row g-3">
                 <div class="col-md-6">
                     <label asp-for="NumeroTelefono" class="form-label">Teléfono de contacto</label>
-                    <input asp-for="NumeroTelefono" inputmode="numeric" maxlength="20" class="form-control" />
+                    <input id="telefonoVisibleRN" type="tel" class="form-control"
+                           inputmode="tel" autocomplete="tel" required />
+                    <input asp-for="NumeroTelefono" type="hidden" />
+                    <div id="errorTelefonoRN" class="text-danger small mt-1" aria-live="polite"></div>
                     <span asp-validation-for="NumeroTelefono" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
@@ -114,13 +129,20 @@
                 </div>
                 <div class="col-md-6">
                     <label asp-for="TelefonoEmergencia" class="form-label">Teléfono de emergencia</label>
-                    <input asp-for="TelefonoEmergencia" inputmode="numeric" maxlength="20" class="form-control" />
+                    <input id="emergenciaVisibleRN" type="tel" class="form-control"
+                           inputmode="tel" required />
+                    <input asp-for="TelefonoEmergencia" type="hidden" />
+                    <div id="errorEmergenciaRN" class="text-danger small mt-1" aria-live="polite"></div>
                     <span asp-validation-for="TelefonoEmergencia" class="text-danger"></span>
                 </div>
             </div>
 
             <hr class="my-4" />
             <h5 class="mb-3">Datos clínicos (opcionales si aún no están disponibles)</h5>
+            <p class="small text-muted">
+                Registre únicamente resultados clínicos medidos. No se deben inventar valores
+                de peso, talla, semanas de gestación ni Apgar para completar el formulario.
+            </p>
             <div class="row g-3">
                 <div class="col-md-4">
                     <label asp-for="SemanasGestacion" class="form-label">Semanas de gestación</label>
@@ -144,7 +166,8 @@
                 </div>
                 <div class="col-md-4">
                     <label asp-for="Apgar5Min" class="form-label">Apgar a los 5 minutos</label>
-                    <input asp-for="Apgar5Min" type="number" min="0" max="10" class="form-control" />
+                    <input asp-for="Apgar5Min" type="number" min="0" max="10" step="1" class="form-control" />
+                    <div class="form-text">Puntuación entera de 0 a 10 a los cinco minutos de vida.</div>
                     <span asp-validation-for="Apgar5Min" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
@@ -171,7 +194,8 @@
 
             <div class="d-flex justify-content-end gap-2 mt-4">
                 <a asp-controller="RecienNacidos" asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
-                <button type="submit" class="btn btn-primary" disabled="@(faltaMedico || faltaMadre)">
+                <button id="btnGuardarRN" type="submit" class="btn btn-primary"
+                        data-permitido="@(faltaMedico || faltaMadre ? "false" : "true")" disabled>
                     Registrar nacimiento
                 </button>
             </div>
@@ -181,4 +205,5 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <partial name="_TelefonosRecienNacidos" />
 }

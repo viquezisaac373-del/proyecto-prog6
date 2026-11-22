@@ -117,7 +117,7 @@
                         <input asp-for="NumeroIdentificacion"
                                class="form-control"
                                inputmode="numeric"
-                               maxlength="25" />
+                               maxlength="25" readonly="@esEdicion" />
 
                         <span asp-validation-for="NumeroIdentificacion"
                               class="text-danger"></span>
@@ -132,12 +132,18 @@
                             Fecha de nacimiento
                         </label>
 
-                        @* No permitir fechas futuras desde el navegador.
-                           El ViewModel y SQL Server también las validan. *@
-                        <input asp-for="FechaNacimiento"
-                               type="date"
-                               max="@DateTime.Today.ToString("yyyy-MM-dd")"
-                               class="form-control" />
+                        @if (esEdicion)
+                        {
+                            <input type="text" class="form-control" readonly
+                                   value="@(Model.FechaNacimiento?.ToString("yyyy-MM-dd"))" />
+                            <input asp-for="FechaNacimiento" type="hidden" />
+                        }
+                        else
+                        {
+                            <input asp-for="FechaNacimiento" type="date"
+                                   max="@DateTime.Today.ToString("yyyy-MM-dd")"
+                                   class="form-control" />
+                        }
 
                         <span asp-validation-for="FechaNacimiento"
                               class="text-danger"></span>
@@ -186,6 +192,13 @@
                             Género
                         </label>
 
+                        @if (esEdicion)
+                        {
+                            <input type="text" class="form-control" value="@Model.Genero" readonly />
+                            <input asp-for="Genero" type="hidden" />
+                        }
+                        else
+                        {
                         <select asp-for="Genero"
                                 class="form-select">
 
@@ -206,6 +219,7 @@
                             </option>
 
                         </select>
+                        }
 
                         <span asp-validation-for="Genero"
                               class="text-danger"></span>
@@ -220,15 +234,19 @@
                             Tipo de sangre
                         </label>
 
+                        @if (esEdicion)
+                        {
+                            <input type="text" class="form-control"
+                                   value="@(Model.TipoSangre == "ND" ? "Pendiente de tipificación" : Model.TipoSangre)" readonly />
+                            <input asp-for="TipoSangre" type="hidden" />
+                        }
+                        else
+                        {
                         <select asp-for="TipoSangre"
                                 class="form-select">
 
                             <option value="">
                                 Seleccione...
-                            </option>
-
-                            <option value="ND">
-                                Pendiente de tipificación (grupo sanguíneo desconocido)
                             </option>
 
                             <option value="O+">O+</option>
@@ -250,6 +268,15 @@
                             Rh nulo no significa Rh negativo ni tipo de sangre desconocido.
                             Seleccione esta opción únicamente cuando exista una tipificación confirmada.
                         </div>
+                        }
+                        @if (esEdicion)
+                        {
+                            <div class="form-text">
+                                Identificación, fecha, género y tipo sanguíneo
+                                no se modifican mediante el mantenimiento ordinario.
+                                Requieren una corrección excepcional autorizada y auditada.
+                            </div>
+                        }
 
                         <span asp-validation-for="TipoSangre"
                               class="text-danger"></span>
