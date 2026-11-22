@@ -94,3 +94,19 @@ del script base actualizado, sin reejecutarlo en una base existente.
 **Estado:** código propuesto, compilación y pruebas funcionales de esta adición
 pendientes. El Product Owner debe aprobar terminología y proceso de
 confirmación/corrección clínica posterior.
+
+## Evidencia de captura facilitada durante QA (21/11/2026)
+
+La captura de registro de RN muestra una fecha de **junio de 2005** y el aviso
+nativo del navegador: *Please enter a value greater than or equal to
+2026-10-22T22:17.* Esto **sí demuestra el bloqueo del campo HTML** por
+antigüedad, pero **no prueba** que el controlador y SQL rechacen todos los POST
+alterados; mantener RN-QA-01 pendiente de comprobación completa.
+
+En la misma captura aparecen valores clínicos ficticios extremos
+(255 semanas de gestación, peso cercano a mil millones de gramos y talla de
+9 999 cm). La imagen **no demuestra que se hayan persistido**, pero indica
+que los límites actuales del formulario son demasiado permisivos.
+Abrir caso de QA específico para validación de rangos clínicos coherentes,
+según criterios fundamentados y aprobados por el PO/personal clínico;
+no fijar límites de un paciente real sin criterio médico.
