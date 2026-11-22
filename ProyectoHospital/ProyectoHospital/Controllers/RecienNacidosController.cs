@@ -41,6 +41,14 @@ namespace ProyectoHospital.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Registrar(RecienNacidoFormViewModel modelo)
         {
+            // Evitar que un POST manipulado introduzca el valor genérico
+            // "Otro", conservado únicamente para expedientes históricos.
+            if (modelo.Genero == "Otro")
+            {
+                ModelState.AddModelError(nameof(modelo.Genero),
+                    "Para nuevos nacimientos seleccione Masculino, Femenino o Indeterminado.");
+            }
+
             // Esta ruta es para altas recientes. Un nacimiento de años atrás debe
             // tramitarse mediante un flujo histórico autorizado, no como RN actual.
             // Ventana provisional de QA: confirmar con el PO antes de producción.
