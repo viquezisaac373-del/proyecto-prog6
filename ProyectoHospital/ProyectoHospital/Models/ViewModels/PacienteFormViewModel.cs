@@ -46,7 +46,7 @@ namespace ProyectoHospital.Models.ViewModels
         // GÉNERO
         [Required(ErrorMessage = "Seleccione un género.")]
         [RegularExpression(
-            @"^(Masculino|Femenino|Otro)$",
+            @"^(Masculino|Femenino|Otro|Indeterminado)$",
             ErrorMessage = "Seleccione una opción válida.")]
         public string Genero { get; set; } = "";
 
