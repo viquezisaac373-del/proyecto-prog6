@@ -54,7 +54,7 @@
                 <div class="col-md-6">
                     <label asp-for="FechaHoraNacimiento" class="form-label">Fecha y hora del nacimiento</label>
                     <input type="text" class="form-control" readonly
-                           value="@Model.FechaHoraNacimiento?.ToString("yyyy-MM-dd HH:mm")" />
+                           value="@(Model.FechaHoraNacimiento?.ToString("yyyy-MM-dd HH:mm"))" />
                     <input asp-for="FechaHoraNacimiento" type="hidden" />
                     <span asp-validation-for="FechaHoraNacimiento" class="text-danger"></span>
                 </div>
