@@ -19,6 +19,8 @@ namespace ProyectoHospital.Models.ViewModels
         [Required(ErrorMessage = "Indique una referencia de la evidencia clínica.")]
         [StringLength(200, MinimumLength = 3,
             ErrorMessage = "Indique una referencia de 3 a 200 caracteres.")]
+        [RegularExpression(@".*\S.*",
+            ErrorMessage = "La referencia no puede consistir únicamente en espacios.")]
         public string ReferenciaLaboratorio { get; set; } = "";
     }
 }
