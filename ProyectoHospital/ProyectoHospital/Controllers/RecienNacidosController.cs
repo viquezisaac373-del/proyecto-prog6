@@ -73,11 +73,13 @@ namespace ProyectoHospital.Controllers
                 // Validación provisional: Género=Femenino en la ficha actual.
                 // Una futura relación clínica de gestación evitará inferirlo
                 // únicamente del género administrativo del expediente.
-                if (!await _repositorio.EsMadreSeleccionableAsync(modelo.MadrePacienteId))
+                if (!await _repositorio.EsMadreSeleccionableAsync(
+                        modelo.MadrePacienteId, modelo.FechaHoraNacimiento!.Value))
                 {
                     ModelState.AddModelError(nameof(modelo.MadrePacienteId),
                         "Seleccione un expediente habilitado como madre. " +
-                        "El paciente debe estar activo y ser elegible según la regla actual.");
+                        "Debe estar activo y tener al menos 10 años a la fecha del parto " +
+                        "(regla provisional; los casos excepcionales requieren revisión clínica).");
                     return await MostrarFormularioAsync(modelo);
                 }
 
