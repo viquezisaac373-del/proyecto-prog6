@@ -39,7 +39,9 @@ namespace ProyectoHospital.Repositories
                        CONCAT(Nombre, N' ', Apellidos, N' (',
                               COALESCE(Numero_Identificacion, N'Sin identificación'), N')')
                 FROM dbo.Pacientes
-                WHERE Activo = 1 AND Genero = N'Femenino'
+                WHERE Activo = 1
+                  AND Genero = N'Femenino'
+                  AND DATEADD(YEAR, 10, Fecha_Nacimiento) <= CONVERT(DATE, SYSDATETIME())
                 ORDER BY Apellidos, Nombre, PacienteId;";
 
             var opciones = new List<OpcionRegistro>();
@@ -59,19 +61,25 @@ namespace ProyectoHospital.Repositories
         /// La regla por género es provisional hasta registrar explícitamente
         /// la relación de persona gestante (criterio pendiente del PO).
         /// </summary>
-        public async Task<bool> EsMadreSeleccionableAsync(int pacienteId)
+        public async Task<bool> EsMadreSeleccionableAsync(int pacienteId, DateTime fechaNacimientoBebe)
         {
+            // Límite administrativo provisional de 10 años en la fecha del parto.
+            // Evita asociar recién nacidos como madres. Casos excepcionales
+            // requieren proceso clínico independiente aprobado por el PO.
             const string sql = @"
                 SELECT COUNT(1)
                 FROM dbo.Pacientes
                 WHERE PacienteId = @PacienteId
                   AND Activo = 1
-                  AND Genero = N'Femenino';";
+                  AND Genero = N'Femenino'
+                  AND DATEADD(YEAR, 10, Fecha_Nacimiento) <= CONVERT(DATE, @FechaNacimientoBebe);";
 
             await using var conexion = new SqlConnection(_connectionString);
             await conexion.OpenAsync();
             await using var comando = new SqlCommand(sql, conexion);
             comando.Parameters.Add("@PacienteId", SqlDbType.Int).Value = pacienteId;
+            comando.Parameters.Add("@FechaNacimientoBebe", SqlDbType.DateTime2).Value =
+                fechaNacimientoBebe;
             return Convert.ToInt32(await comando.ExecuteScalarAsync()) == 1;
         }
 
