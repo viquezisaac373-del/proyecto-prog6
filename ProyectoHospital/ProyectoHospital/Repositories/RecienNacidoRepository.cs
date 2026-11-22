@@ -12,7 +12,8 @@ namespace ProyectoHospital.Repositories
     public sealed record RecienNacidoResumen(
         int PacienteId, int NacimientoId, string NombreCompleto,
         string NombreMadre, DateTime FechaHoraNacimiento,
-        string? NumeroIdentificacion, bool NacimientoActivo, bool PacienteActivo);
+        string? NumeroIdentificacion, bool NacimientoActivo, bool PacienteActivo,
+        string TipoSangre);
 
     /// <summary>
     /// Acceso a datos del flujo de recién nacidos.
@@ -119,7 +120,8 @@ namespace ProyectoHospital.Repositories
                        n.Fecha_Hora_Nacimiento,
                        b.Numero_Identificacion,
                        n.Activo,
-                       b.Activo
+                       b.Activo,
+                       b.TipoSangre
                 FROM dbo.Nacimientos AS n
                 INNER JOIN dbo.Pacientes AS b ON b.PacienteId = n.BebePacienteId
                 INNER JOIN dbo.Pacientes AS m ON m.PacienteId = n.MadrePacienteId
@@ -140,7 +142,8 @@ namespace ProyectoHospital.Repositories
                     lector.GetDateTime(4),
                     lector.IsDBNull(5) ? null : lector.GetString(5),
                     lector.GetBoolean(6),
-                    lector.GetBoolean(7)));
+                    lector.GetBoolean(7),
+                    lector.GetString(8)));
 
             return nacimientos;
         }
@@ -192,8 +195,15 @@ namespace ProyectoHospital.Repositories
 
             return EjecutarConAuditoriaAsync(usuarioId, async conexion =>
             {
+                // El SP existente inserta ND. La tipificación confirmada se
+                // incorpora en la MISMA transacción externa para evitar altas
+                // parciales si la actualización de laboratorio falla.
+                await using var transaccion =
+                    (SqlTransaction)await conexion.BeginTransactionAsync();
+                try
+                {
                 await using var comando =
-                    new SqlCommand("dbo.usp_RegistrarRecienNacido", conexion);
+                    new SqlCommand("dbo.usp_RegistrarRecienNacido", conexion, transaccion);
                 comando.CommandType = CommandType.StoredProcedure;
 
                 comando.Parameters.Add("@MadrePacienteId", SqlDbType.Int).Value =
@@ -254,7 +264,31 @@ namespace ProyectoHospital.Repositories
                         "La operación no devolvió los identificadores del nacimiento.");
                 }
 
+                if (modelo.TipoSangre != "ND")
+                {
+                    const string actualizarTipo = @"
+                        UPDATE dbo.Pacientes SET TipoSangre = @TipoSangre
+                        WHERE PacienteId = @PacienteId AND TipoSangre = N'ND';
+                        IF @@ROWCOUNT <> 1
+                            THROW 51980, N'No se pudo registrar la tipificación del recién nacido.', 1;";
+                    await using var actualizacion =
+                        new SqlCommand(actualizarTipo, conexion, transaccion);
+                    actualizacion.Parameters.Add("@PacienteId", SqlDbType.Int).Value =
+                        pacienteId;
+                    actualizacion.Parameters.Add("@TipoSangre", SqlDbType.NVarChar, 3).Value =
+                        modelo.TipoSangre;
+                    await actualizacion.ExecuteNonQueryAsync();
+                }
+
+                await transaccion.CommitAsync();
                 return (pacienteId, nacimientoId);
+                }
+                catch
+                {
+                    try { await transaccion.RollbackAsync(); }
+                    catch (Exception ex) { _logger.LogError(ex, "Error al revertir alta de RN."); }
+                    throw;
+                }
             });
         }
 
