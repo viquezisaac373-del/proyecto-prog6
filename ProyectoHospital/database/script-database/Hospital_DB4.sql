@@ -168,7 +168,7 @@ CREATE TABLE dbo.Pacientes (
         ),
     Genero NVARCHAR(15) NOT NULL
         CONSTRAINT CK_Pacientes_Genero CHECK (
-            Genero IN (N'Masculino', N'Femenino', N'Otro')
+            Genero IN (N'Masculino', N'Femenino', N'Otro', N'Indeterminado')
         ),
     TipoSangre NVARCHAR(3) NOT NULL
         CONSTRAINT CK_Pacientes_TipoSangre CHECK (
