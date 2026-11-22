@@ -46,8 +46,13 @@
                     <span asp-validation-for="Apellidos" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
-                    <label asp-for="Genero" class="form-label">Género</label>
-                    <input type="text" class="form-control" value="@Model.Genero" readonly />
+                    <label asp-for="Genero" class="form-label">Sexo registrado al nacer</label>
+                    <input type="text" class="form-control" readonly
+                           value="@(Model.Genero == "Indeterminado"
+                               ? "Indeterminado (pendiente de valoración clínica)"
+                               : Model.Genero == "Otro"
+                                   ? "Otro (dato histórico; requiere revisión)"
+                                   : Model.Genero)" />
                     <input asp-for="Genero" type="hidden" />
                     <span asp-validation-for="Genero" class="text-danger"></span>
                 </div>
