@@ -21,9 +21,13 @@ namespace ProyectoHospital.Models.ViewModels
         [StringLength(130)]
         public string Apellidos { get; set; } = "";
 
-        [Required(ErrorMessage = "Seleccione el género.")]
-        [RegularExpression(@"^(Masculino|Femenino|Otro)$",
-            ErrorMessage = "Seleccione un género válido.")]
+        // La columna histórica se denomina Genero. En el formulario de
+        // nacimientos corresponde al sexo registrado al nacer.
+        // "Otro" se conserva solo para expedientes anteriores: no se
+        // ofrece como opción en las altas nuevas.
+        [Required(ErrorMessage = "Seleccione el sexo registrado al nacer.")]
+        [RegularExpression(@"^(Masculino|Femenino|Indeterminado|Otro)$",
+            ErrorMessage = "Seleccione un valor válido para el sexo registrado al nacer.")]
         public string Genero { get; set; } = "";
 
         [Required(ErrorMessage = "El teléfono es obligatorio.")]
