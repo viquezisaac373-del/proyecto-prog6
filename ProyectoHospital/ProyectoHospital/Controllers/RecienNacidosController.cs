@@ -41,6 +41,17 @@ namespace ProyectoHospital.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Registrar(RecienNacidoFormViewModel modelo)
         {
+            // Esta ruta es para altas recientes. Un nacimiento de años atrás debe
+            // tramitarse mediante un flujo histórico autorizado, no como RN actual.
+            // Ventana provisional de QA: confirmar con el PO antes de producción.
+            if (modelo.FechaHoraNacimiento.HasValue &&
+                modelo.FechaHoraNacimiento.Value < DateTime.Now.AddDays(-30))
+            {
+                ModelState.AddModelError(nameof(modelo.FechaHoraNacimiento),
+                    "El registro ordinario admite nacimientos de los últimos 30 días. " +
+                    "Para un nacimiento anterior se requiere un procedimiento histórico.");
+            }
+
             if (!ModelState.IsValid)
                 return await MostrarFormularioAsync(modelo);
 
@@ -50,6 +61,18 @@ namespace ProyectoHospital.Controllers
 
             try
             {
+                // Nunca confiar exclusivamente en el filtro del selector HTML.
+                // Validación provisional: Género=Femenino en la ficha actual.
+                // Una futura relación clínica de gestación evitará inferirlo
+                // únicamente del género administrativo del expediente.
+                if (!await _repositorio.EsMadreSeleccionableAsync(modelo.MadrePacienteId))
+                {
+                    ModelState.AddModelError(nameof(modelo.MadrePacienteId),
+                        "Seleccione un expediente habilitado como madre. " +
+                        "El paciente debe estar activo y ser elegible según la regla actual.");
+                    return await MostrarFormularioAsync(modelo);
+                }
+
                 var (pacienteId, nacimientoId) =
                     await _repositorio.RegistrarAsync(modelo, usuarioId);
 
