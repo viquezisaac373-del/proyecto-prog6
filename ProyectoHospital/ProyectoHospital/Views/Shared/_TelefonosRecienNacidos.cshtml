@@ -1,0 +1,114 @@
+@* Se reutiliza en registro y edición de nacimientos. Los datos se guardan
+   como dígitos con indicativo internacional para preservar compatibilidad SQL. *@
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.8/dist/css/intlTelInput.min.css" />
+<style>
+    .iti { width: 100%; }
+    .iti__country-list { max-width: min(350px, 90vw); }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.8/dist/js/intlTelInput.min.js"></script>
+<script>
+(() => {
+    "use strict";
+    const form = document.getElementById("formRN");
+    const boton = document.getElementById("btnGuardarRN");
+    const aviso = document.getElementById("mensajeTelefonosRN");
+    if (!form || !boton || !aviso) return;
+
+    const campos = [
+        {
+            visible: document.getElementById("telefonoVisibleRN"),
+            oculto: document.getElementById("NumeroTelefono"),
+            error: document.getElementById("errorTelefonoRN")
+        },
+        {
+            visible: document.getElementById("emergenciaVisibleRN"),
+            oculto: document.getElementById("TelefonoEmergencia"),
+            error: document.getElementById("errorEmergenciaRN")
+        }
+    ];
+    let listo = false;
+    const mensajeGeneral = texto => {
+        aviso.textContent = texto;
+        aviso.classList.remove("d-none");
+    };
+
+    if (!window.intlTelInput || campos.some(c => !c.visible || !c.oculto || !c.error)) {
+        mensajeGeneral("No se pudo cargar la validación telefónica. Revise la conexión a Internet.");
+        return;
+    }
+
+    const transformarAlSelector = valor => {
+        const digitos = (valor || "").replace(/\D/g, "");
+        if (!digitos) return "";
+        return digitos.length === 8 ? "+506" + digitos : "+" + digitos;
+    };
+
+    for (const campo of campos) {
+        campo.selector = window.intlTelInput(campo.visible, {
+            initialCountry: "cr",
+            countryOrder: ["cr", "ni", "pa", "us", "mx", "co", "es"],
+            separateDialCode: true,
+            showFlags: true,
+            countrySearch: true,
+            strictMode: true,
+            loadUtils: () => import(
+                "https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.8/dist/js/utils.js"
+            )
+        });
+    }
+
+    const validar = campo => {
+        campo.visible.setCustomValidity("");
+        campo.error.textContent = "";
+        if (!campo.visible.value.trim() || !campo.selector.isValidNumberPrecise()) {
+            const texto = "Ingrese un teléfono válido para el país seleccionado.";
+            campo.visible.setCustomValidity(texto);
+            campo.error.textContent = texto;
+            return false;
+        }
+        return true;
+    };
+
+    Promise.all(campos.map(c => c.selector.promise))
+        .then(() => {
+            for (const campo of campos) {
+                if (campo.oculto.value) {
+                    campo.selector.setNumber(transformarAlSelector(campo.oculto.value));
+                }
+            }
+            listo = true;
+            boton.disabled = boton.dataset.permitido !== "true";
+        })
+        .catch(() => mensajeGeneral(
+            "No fue posible cargar las reglas de validación telefónica. Recargue la página."
+        ));
+
+    for (const campo of campos) {
+        campo.visible.addEventListener("blur", () => {
+            if (listo) validar(campo);
+        });
+        campo.visible.addEventListener("input", () => {
+            campo.visible.setCustomValidity("");
+            campo.error.textContent = "";
+        });
+        campo.visible.addEventListener("countrychange", () => {
+            campo.visible.setCustomValidity("");
+            campo.error.textContent = "";
+        });
+    }
+
+    form.addEventListener("submit", evento => {
+        if (!listo || campos.some(c => !validar(c))) {
+            evento.preventDefault();
+            evento.stopImmediatePropagation();
+            return;
+        }
+
+        for (const campo of campos) {
+            // SQL Server permite 8 a 20 dígitos, sin signo '+'.
+            campo.oculto.value = campo.selector.getNumber().replace(/\D/g, "");
+        }
+    }, true);
+})();
+</script>
