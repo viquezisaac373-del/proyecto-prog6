@@ -7,9 +7,9 @@
 <div class="container mt-4 mb-5">
     <h2>Editar nacimiento #@Model.NacimientoId</h2>
     <p class="text-muted">
-        Paciente #@Model.PacienteId. Se conservan la identificación, el tipo sanguíneo
-        y las relaciones con la madre y el médico. La fecha de nacimiento del
-        expediente se actualizará si se corrige la fecha del parto.
+        Paciente #@Model.PacienteId. Se conservan identificación, género, fecha y
+        hora de nacimiento, tipo sanguíneo, madre y médico. Las correcciones
+        excepcionales de estos datos deben autorizarse y auditarse por separado.
     </p>
     <div class="alert alert-info">
         Esta edición modifica datos administrativos del bebé y detalles del nacimiento.
@@ -46,18 +46,15 @@
                 </div>
                 <div class="col-md-6">
                     <label asp-for="Genero" class="form-label">Género</label>
-                    <select asp-for="Genero" class="form-select">
-                        <option value="Masculino">Masculino</option>
-                        <option value="Femenino">Femenino</option>
-                        <option value="Otro">Otro</option>
-                    </select>
+                    <input type="text" class="form-control" value="@Model.Genero" readonly />
+                    <input asp-for="Genero" type="hidden" />
                     <span asp-validation-for="Genero" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="FechaHoraNacimiento" class="form-label">Fecha y hora del nacimiento</label>
-                    <input asp-for="FechaHoraNacimiento" type="datetime-local"
-                           asp-format="{0:yyyy-MM-ddTHH:mm}"
-                           max="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" class="form-control" />
+                    <input type="text" class="form-control" readonly
+                           value="@Model.FechaHoraNacimiento?.ToString("yyyy-MM-dd HH:mm")" />
+                    <input asp-for="FechaHoraNacimiento" type="hidden" />
                     <span asp-validation-for="FechaHoraNacimiento" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
