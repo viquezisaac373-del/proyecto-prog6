@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using PhoneNumbers;
 
 namespace ProyectoHospital.Models.ViewModels
 {
@@ -86,6 +87,46 @@ namespace ProyectoHospital.Models.ViewModels
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
+            // El navegador envía únicamente dígitos con prefijo de país,
+            // siguiendo las restricciones SQL existentes. Validar el país
+            // también en servidor para impedir que se envíen números inventados.
+            var utilidadTelefonica = PhoneNumberUtil.GetInstance();
+            var telefonos = new[]
+            {
+                (Valor: NumeroTelefono, Campo: nameof(NumeroTelefono)),
+                (Valor: TelefonoEmergencia, Campo: nameof(TelefonoEmergencia))
+            };
+
+            foreach (var telefono in telefonos)
+            {
+                if (string.IsNullOrWhiteSpace(telefono.Valor) ||
+                    telefono.Valor.Length < 8 ||
+                    telefono.Valor.Length > 20 ||
+                    telefono.Valor.Any(c => c < '0' || c > '9'))
+                    continue; // Required y RegularExpression cubren esos casos.
+
+                // El código CR se presupone únicamente para 8 dígitos sin prefijo;
+                // los valores internacionales deben incluir el indicativo.
+                string numero = telefono.Valor.Length == 8
+                    ? telefono.Valor
+                    : "+" + telefono.Valor;
+                bool valido;
+                try
+                {
+                    var parseado = utilidadTelefonica.Parse(numero, "CR");
+                    valido = utilidadTelefonica.IsValidNumber(parseado);
+                }
+                catch (NumberParseException)
+                {
+                    valido = false;
+                }
+
+                if (!valido)
+                    yield return new ValidationResult(
+                        "Ingrese un teléfono válido para el país seleccionado.",
+                        new[] { telefono.Campo });
+            }
+
             if (FechaHoraNacimiento.HasValue &&
                 FechaHoraNacimiento.Value > DateTime.Now)
             {
