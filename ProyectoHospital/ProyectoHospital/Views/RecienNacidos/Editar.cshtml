@@ -16,11 +16,12 @@
         Los cambios quedarán auditados. No modifica el expediente de la madre ni del médico.
     </div>
 
-    <form asp-controller="RecienNacidos" asp-action="Editar"
+    <form id="formRN" asp-controller="RecienNacidos" asp-action="Editar"
           asp-route-id="@Model.NacimientoId" method="post"
           asp-antiforgery="true" class="card shadow-sm">
         <div class="card-body p-4">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <div id="mensajeTelefonosRN" class="alert alert-warning d-none" role="alert"></div>
             <input asp-for="NacimientoId" type="hidden" />
             <input asp-for="PacienteId" type="hidden" />
             <input asp-for="MadrePacienteId" type="hidden" />
@@ -72,7 +73,10 @@
             <div class="row g-3">
                 <div class="col-md-6">
                     <label asp-for="NumeroTelefono" class="form-label">Teléfono</label>
-                    <input asp-for="NumeroTelefono" maxlength="20" inputmode="numeric" class="form-control" />
+                    <input id="telefonoVisibleRN" type="tel" class="form-control"
+                           inputmode="tel" autocomplete="tel" required />
+                    <input asp-for="NumeroTelefono" type="hidden" />
+                    <div id="errorTelefonoRN" class="text-danger small mt-1" aria-live="polite"></div>
                     <span asp-validation-for="NumeroTelefono" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
@@ -87,7 +91,10 @@
                 </div>
                 <div class="col-md-6">
                     <label asp-for="TelefonoEmergencia" class="form-label">Teléfono de emergencia</label>
-                    <input asp-for="TelefonoEmergencia" maxlength="20" inputmode="numeric" class="form-control" />
+                    <input id="emergenciaVisibleRN" type="tel" class="form-control"
+                           inputmode="tel" required />
+                    <input asp-for="TelefonoEmergencia" type="hidden" />
+                    <div id="errorEmergenciaRN" class="text-danger small mt-1" aria-live="polite"></div>
                     <span asp-validation-for="TelefonoEmergencia" class="text-danger"></span>
                 </div>
             </div>
@@ -145,7 +152,8 @@
 
             <div class="d-flex justify-content-end gap-2 mt-4">
                 <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
-                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                <button id="btnGuardarRN" type="submit" class="btn btn-primary"
+                        data-permitido="true" disabled>Guardar cambios</button>
             </div>
         </div>
     </form>
@@ -153,4 +161,5 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <partial name="_TelefonosRecienNacidos" />
 }
