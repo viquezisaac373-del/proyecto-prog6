@@ -278,6 +278,29 @@ namespace ProyectoHospital.Repositories
                     actualizacion.Parameters.Add("@TipoSangre", SqlDbType.NVarChar, 3).Value =
                         modelo.TipoSangre;
                     await actualizacion.ExecuteNonQueryAsync();
+
+                    // Justificación de la tipificación confirmada en el mismo COMMIT.
+                    const string registrarEvidencia = @"
+                        INSERT INTO dbo.BitacoraAuditoria
+                            (UsuarioId, Accion, Tabla_Modificada, RegistroId,
+                             VAnteriores, VNuevos, Objeto)
+                        VALUES
+                            (TRY_CONVERT(INT, SESSION_CONTEXT(N'UsuarioId')),
+                             N'CONFIRMACION_TIPIFICACION', N'Pacientes',
+                             CONVERT(NVARCHAR(100), @PacienteId),
+                             N'{""TipoSangre"":""ND""}',
+                             (SELECT @TipoSangre AS TipoSangre,
+                                     @Referencia AS ReferenciaLaboratorio
+                              FOR JSON PATH, WITHOUT_ARRAY_WRAPPER),
+                             N'RecienNacidos');";
+                    await using var auditoria =
+                        new SqlCommand(registrarEvidencia, conexion, transaccion);
+                    auditoria.Parameters.Add("@PacienteId", SqlDbType.Int).Value = pacienteId;
+                    auditoria.Parameters.Add("@TipoSangre", SqlDbType.NVarChar, 3).Value =
+                        modelo.TipoSangre;
+                    auditoria.Parameters.Add("@Referencia", SqlDbType.NVarChar, 200).Value =
+                        modelo.ReferenciaTipoSangre!.Trim();
+                    await auditoria.ExecuteNonQueryAsync();
                 }
 
                 await transaccion.CommitAsync();
