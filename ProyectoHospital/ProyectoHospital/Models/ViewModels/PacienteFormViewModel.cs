@@ -15,13 +15,11 @@ namespace ProyectoHospital.Models.ViewModels
         public int PacienteId { get; set; }
 
         // IDENTIFICACIÓN
-        // Entre 9 y 25 dígitos, sin aceptar solamente ceros.
-        // Regla provisional para documentos numéricos.
+        // Las ALTAS nuevas solo admiten cédula nacional (9 dígitos).
+        // En edición conservamos las identificaciones históricas tal como están,
+        // porque la edición ordinaria NO modifica este campo en SQL.
         [Required(ErrorMessage = "La identificación es obligatoria.")]
         [StringLength(25)]
-        [RegularExpression(
-            @"^(?!0+$)[0-9]{9,25}$",
-            ErrorMessage = "Ingrese entre 9 y 25 dígitos. No se permiten únicamente ceros.")]
         public string NumeroIdentificacion { get; set; } = "";
 
         // NOMBRE
@@ -110,6 +108,14 @@ namespace ProyectoHospital.Models.ViewModels
         public IEnumerable<ValidationResult> Validate(
             ValidationContext validationContext)
         {
+            if (PacienteId == 0 && !System.Text.RegularExpressions.Regex.IsMatch(
+                    NumeroIdentificacion ?? "", @"^(?!0{9}$)[0-9]{9}$"))
+            {
+                yield return new ValidationResult(
+                    "Para nuevos pacientes ingrese una cédula costarricense de exactamente 9 dígitos.",
+                    new[] { nameof(NumeroIdentificacion) });
+            }
+
             // La fecha de nacimiento no puede ser posterior a hoy.
             if (FechaNacimiento.HasValue &&
                 FechaNacimiento.Value.Date > DateTime.Today)
