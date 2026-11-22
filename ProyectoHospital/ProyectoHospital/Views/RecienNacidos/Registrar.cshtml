@@ -35,6 +35,10 @@
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
             <h5 class="mb-3">Responsables del nacimiento</h5>
+            <p class="small text-muted">
+                Solo se muestran pacientes habilitados por la regla provisional de selección de madre.
+                Las correcciones excepcionales de filiación requieren validación administrativa.
+            </p>
             <div class="row g-3">
                 <div class="col-md-6">
                     <label asp-for="MadrePacienteId" class="form-label">Madre (paciente existente)</label>
@@ -79,8 +83,11 @@
                     <label asp-for="FechaHoraNacimiento" class="form-label">Fecha y hora del nacimiento</label>
                     <input asp-for="FechaHoraNacimiento" type="datetime-local"
                            asp-format="{0:yyyy-MM-ddTHH:mm}"
+                           min="@DateTime.Now.AddDays(-30).ToString("yyyy-MM-ddTHH:mm")"
                            max="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")"
                            class="form-control" />
+                    <div class="form-text">El registro ordinario acepta los últimos 30 días.
+                        Los registros históricos se tramitarán por una vía diferente (regla provisional).</div>
                     <span asp-validation-for="FechaHoraNacimiento" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
