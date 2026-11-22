@@ -153,6 +153,12 @@
                         <option value="RHN">Rh nulo (confirmado por laboratorio)</option>
                     </select>
                     <span asp-validation-for="TipoSangre" class="text-danger"></span>
+                    <label asp-for="ReferenciaTipoSangre" class="form-label mt-2">
+                        Referencia del informe (si hay tipificación confirmada)
+                    </label>
+                    <input asp-for="ReferenciaTipoSangre" maxlength="200"
+                           class="form-control" placeholder="Código del informe, sin datos personales" />
+                    <span asp-validation-for="ReferenciaTipoSangre" class="text-danger"></span>
                     <div class="form-text">
                         Si no existe resultado clínico, conserve «Pendiente».
                         Se mostrará un aviso de seguimiento en el listado de nacimientos.
