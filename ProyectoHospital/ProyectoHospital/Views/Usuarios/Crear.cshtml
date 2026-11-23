@@ -1,0 +1,111 @@
+@model CrearUsuarioViewModel
+@{
+    ViewData["Title"] = "Registrar empleado y usuario";
+}
+<div class="container my-4">
+    <h2>Registrar empleado y usuario</h2>
+    <p class="text-muted">Crea ambos registros juntos y asigna el rol de acceso. La operación se confirma en una sola transacción.</p>
+    <form asp-action="Crear" method="post" asp-antiforgery="true" class="card shadow-sm">
+        <div class="card-body">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <h5>Datos del empleado</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label asp-for="NumeroIdentificacion" class="form-label"></label>
+                    <input asp-for="NumeroIdentificacion" class="form-control" maxlength="30" autocomplete="off" />
+                    <span asp-validation-for="NumeroIdentificacion" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Nombre" class="form-label"></label>
+                    <input asp-for="Nombre" class="form-control" maxlength="100" />
+                    <span asp-validation-for="Nombre" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Apellidos" class="form-label"></label>
+                    <input asp-for="Apellidos" class="form-control" maxlength="150" />
+                    <span asp-validation-for="Apellidos" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Telefono" class="form-label"></label>
+                    <input asp-for="Telefono" class="form-control" maxlength="20" inputmode="numeric" />
+                    <span asp-validation-for="Telefono" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Correo" class="form-label"></label>
+                    <input asp-for="Correo" class="form-control" type="email" maxlength="150" />
+                    <span asp-validation-for="Correo" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Puesto" class="form-label"></label>
+                    <input asp-for="Puesto" class="form-control" maxlength="80" placeholder="Ej.: Médico, Recepción" />
+                    <span asp-validation-for="Puesto" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="border rounded p-3 mb-4">
+                <div class="form-check mb-3">
+                    <input asp-for="EsMedico" class="form-check-input" />
+                    <label asp-for="EsMedico" class="form-check-label"></label>
+                </div>
+                <p class="text-muted small">Para médicos se requieren especialidad, horario y duración de cita. Estos campos también son obligatorios si el rol seleccionado es Médico.</p>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="Especialidad" class="form-label"></label>
+                        <input asp-for="Especialidad" class="form-control" maxlength="100" />
+                        <span asp-validation-for="Especialidad" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="HoraEntrada" class="form-label"></label>
+                        <input asp-for="HoraEntrada" type="time" class="form-control" />
+                        <span asp-validation-for="HoraEntrada" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="HoraSalida" class="form-label"></label>
+                        <input asp-for="HoraSalida" type="time" class="form-control" />
+                        <span asp-validation-for="HoraSalida" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-2">
+                        <label asp-for="DuracionCitaMin" class="form-label"></label>
+                        <input asp-for="DuracionCitaMin" type="number" min="1" max="240" class="form-control" />
+                        <span asp-validation-for="DuracionCitaMin" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+            <h5>Cuenta de acceso</h5>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="NombreUsuario" class="form-label"></label>
+                    <input asp-for="NombreUsuario" class="form-control" maxlength="50" autocomplete="off" />
+                    <span asp-validation-for="NombreUsuario" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="RolId" class="form-label"></label>
+                    <select asp-for="RolId" class="form-select">
+                        <option value="0">Seleccione un rol...</option>
+                        @foreach (var rol in Model.Roles)
+                        {
+                            <option value="@rol.RolId">@rol.Nombre</option>
+                        }
+                    </select>
+                    <span asp-validation-for="RolId" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Clave" class="form-label"></label>
+                    <input asp-for="Clave" type="password" class="form-control" autocomplete="new-password" minlength="12" />
+                    <span asp-validation-for="Clave" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ConfirmacionClave" class="form-label"></label>
+                    <input asp-for="ConfirmacionClave" type="password" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="ConfirmacionClave" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Registrar empleado y cuenta</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </div>
+    </form>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
