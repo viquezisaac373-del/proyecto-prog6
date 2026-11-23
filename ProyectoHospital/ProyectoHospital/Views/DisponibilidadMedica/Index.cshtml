@@ -1,0 +1,197 @@
+@model DisponibilidadMedicaIndexViewModel
+@{
+    ViewData["Title"] = "Horarios médicos semanales";
+}
+<div class="container my-4 mb-5">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+        <div>
+            <h1 class="h3">Horarios médicos semanales</h1>
+            <p class="text-muted">
+                Disponibilidad recurrente por médico y día. Los bloques activos no deben solaparse.
+            </p>
+        </div>
+        <a asp-controller="Modulos" asp-action="Index"
+           class="btn btn-outline-secondary">Volver a módulos</a>
+    </div>
+
+    @if (TempData["Exito"] is string exito)
+    {
+        <div class="alert alert-success" role="status">@exito</div>
+    }
+    @if (TempData["Error"] is string error)
+    {
+        <div class="alert alert-danger" role="alert">@error</div>
+    }
+
+    @if (User.IsInRole("Administrador"))
+    {
+        <div class="card mb-4">
+            <div class="card-header"><h2 class="h5 mb-0">Registrar disponibilidad semanal</h2></div>
+            <div class="card-body">
+                <form asp-controller="DisponibilidadMedica" asp-action="Crear" method="post" asp-antiforgery="true">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    <div class="row g-3">
+                        <div class="col-md-5">
+                            <label asp-for="Nuevo.EmpleadoId" class="form-label"></label>
+                            <select asp-for="Nuevo.EmpleadoId" class="form-select" required>
+                                <option value="0">Seleccione médico...</option>
+                                @foreach (var medico in Model.Medicos)
+                                {
+                                    <option value="@medico.EmpleadoId">
+                                        #@medico.EmpleadoId — @medico.Nombre
+                                        (@(medico.Especialidad ?? "Sin especialidad"), @medico.DuracionCitaMin min/cita)
+                                    </option>
+                                }
+                            </select>
+                            <span asp-validation-for="Nuevo.EmpleadoId" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="Nuevo.DiaSemana" class="form-label"></label>
+                            <select asp-for="Nuevo.DiaSemana" class="form-select" required>
+                                <option value="0">Día...</option>
+                                <option value="1">Lunes</option>
+                                <option value="2">Martes</option>
+                                <option value="3">Miércoles</option>
+                                <option value="4">Jueves</option>
+                                <option value="5">Viernes</option>
+                                <option value="6">Sábado</option>
+                                <option value="7">Domingo</option>
+                            </select>
+                            <span asp-validation-for="Nuevo.DiaSemana" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-2">
+                            <label asp-for="Nuevo.HoraInicio" class="form-label"></label>
+                            <input asp-for="Nuevo.HoraInicio" type="time" class="form-control" required />
+                            <span asp-validation-for="Nuevo.HoraInicio" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-2">
+                            <label asp-for="Nuevo.HoraFin" class="form-label"></label>
+                            <input asp-for="Nuevo.HoraFin" type="time" class="form-control" required />
+                            <span asp-validation-for="Nuevo.HoraFin" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-3">
+                        Guardar bloque semanal
+                    </button>
+                </form>
+            </div>
+        </div>
+    }
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <form asp-action="Index" method="get" class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label for="especialidad" class="form-label">Especialidad</label>
+                    <select id="especialidad" name="especialidad" class="form-select">
+                        <option value="">Todas las especialidades</option>
+                        @foreach (var especialidad in Model.Especialidades)
+                        {
+                            <option value="@especialidad"
+                                    selected="@(Model.EspecialidadFiltro == especialidad)">@especialidad</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="medicoId" class="form-label">Consultar disponibilidad de</label>
+                    <select id="medicoId" name="medicoId" class="form-select">
+                        <option value="">Todos los médicos</option>
+                        @foreach (var medico in Model.Medicos)
+                        {
+                            <option value="@medico.EmpleadoId"
+                                    selected="@(Model.MedicoFiltro == medico.EmpleadoId)">
+                                @medico.Nombre — @(medico.Especialidad ?? "Sin especialidad")
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-outline-primary" type="submit">Filtrar reporte</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Limpiar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="border rounded bg-white p-3">
+                <div class="text-muted small">Bloques activos</div>
+                <div class="h4 mb-0">@Model.Bloques.Count</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="border rounded bg-white p-3">
+                <div class="text-muted small">Horas semanales disponibles</div>
+                <div class="h4 mb-0">@((Model.TotalMinutos / 60m).ToString("N1"))</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="border rounded bg-white p-3">
+                <div class="text-muted small">Cupos semanales teóricos</div>
+                <div class="h4 mb-0">@Model.TotalCuposTeoricos</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive bg-white border rounded">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>Médico</th>
+                    <th>Especialidad</th>
+                    <th>Día</th>
+                    <th>Desde</th>
+                    <th>Hasta</th>
+                    <th>Min/cita</th>
+                    <th>Cupos teóricos</th>
+                    @if (User.IsInRole("Administrador"))
+                    {
+                        <th class="text-end">Acción</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var bloque in Model.Bloques)
+            {
+                <tr>
+                    <td>@bloque.Medico <span class="text-muted small">(#@bloque.EmpleadoId)</span></td>
+                    <td>@(bloque.Especialidad ?? "—")</td>
+                    <td>@bloque.DiaTexto</td>
+                    <td>@bloque.HoraInicio.ToString(@"hh\:mm")</td>
+                    <td>@bloque.HoraFin.ToString(@"hh\:mm")</td>
+                    <td>@bloque.DuracionCitaMin</td>
+                    <td>@bloque.CuposTeoricos</td>
+                    @if (User.IsInRole("Administrador"))
+                    {
+                        <td class="text-end">
+                            <form asp-action="Desactivar" method="post" asp-antiforgery="true">
+                                <input type="hidden" name="bloqueId" value="@bloque.BloqueId" />
+                                <input type="hidden" name="medicoId" value="@Model.MedicoFiltro" />
+                                <button class="btn btn-sm btn-outline-danger" type="submit"
+                                        onclick="return confirm('¿Desactivar este horario semanal?')">
+                                    Desactivar
+                                </button>
+                            </form>
+                        </td>
+                    }
+                </tr>
+            }
+            </tbody>
+        </table>
+        @if (Model.Bloques.Count == 0)
+        {
+            <div class="p-3 text-muted">Todavía no hay bloques activos para el filtro seleccionado.</div>
+        }
+    </div>
+
+    <p class="text-muted small mt-3">
+        Reporte de capacidad teórica: calcula bloques y duración de cita del empleado.
+        No descuenta reservas, feriados, ausencias ni cierres extraordinarios. La disponibilidad
+        efectiva debe verificarse al integrar la agenda de citas.
+    </p>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
