@@ -1,0 +1,105 @@
+@model RecomendacionesReposoIndexViewModel
+@{
+    ViewData["Title"] = "Recomendaciones médicas de reposo";
+}
+<div class="container my-4 mb-5">
+    <h1 class="h3">Recomendaciones médicas de reposo</h1>
+    <p class="text-muted">Registro interno de recomendaciones realizadas por el médico autenticado.</p>
+    <div class="alert alert-warning" role="note">
+        <strong>No es una incapacidad oficial de la CCSS ni del INS.</strong>
+        Una recomendación emitida en consulta privada puede requerir valoración y
+        trámite ante la institución competente. Este sistema no realiza homologaciones
+        ni gestiona subsidios o licencias oficiales.
+    </div>
+    @if (TempData["Exito"] is string exito)
+    {
+        <div class="alert alert-success">@exito</div>
+    }
+    <div class="card mb-4">
+        <div class="card-header"><h2 class="h5 mb-0">Nueva recomendación</h2></div>
+        <div class="card-body">
+            <form asp-controller="RecomendacionesReposo" asp-action="Crear" method="post" asp-antiforgery="true">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <label asp-for="Nuevo.PacienteId" class="form-label"></label>
+                        <select asp-for="Nuevo.PacienteId" class="form-select" required>
+                            <option value="0">Seleccione paciente activo...</option>
+                            @foreach (var paciente in Model.Pacientes)
+                            {
+                                <option value="@paciente.PacienteId">@paciente.Etiqueta</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Nuevo.PacienteId" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Nuevo.FechaInicio" class="form-label"></label>
+                        <input asp-for="Nuevo.FechaInicio" type="date" class="form-control" required />
+                        <span asp-validation-for="Nuevo.FechaInicio" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Nuevo.FechaFin" class="form-label"></label>
+                        <input asp-for="Nuevo.FechaFin" type="date" class="form-control" required />
+                        <span asp-validation-for="Nuevo.FechaFin" class="text-danger"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Nuevo.Justificacion" class="form-label"></label>
+                        <textarea asp-for="Nuevo.Justificacion" class="form-control" rows="3"
+                                  minlength="10" maxlength="500" required></textarea>
+                        <span asp-validation-for="Nuevo.Justificacion" class="text-danger"></span>
+                        <div class="form-text">
+                            Información clínica sensible: registre únicamente lo necesario.
+                            El diagnóstico no se replica en la bitácora administrativa.
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-primary mt-3" type="submit">Registrar recomendación interna</button>
+            </form>
+        </div>
+    </div>
+
+    <h2 class="h5">Historial de recomendaciones propias</h2>
+    <div class="table-responsive bg-white border rounded">
+        <table class="table table-striped mb-0">
+            <thead>
+                <tr>
+                    <th>Folio interno</th>
+                    <th>Paciente</th>
+                    <th>Inicio</th>
+                    <th>Fin</th>
+                    <th>Días calendario</th>
+                    <th>Fecha registro</th>
+                    <th>Documento</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Registros)
+                {
+                    <tr>
+                        <td>#@item.RecomendacionId</td>
+                        <td>@item.Paciente (#@item.PacienteId)</td>
+                        <td>@item.FechaInicio.ToString("dd/MM/yyyy")</td>
+                        <td>@item.FechaFin.ToString("dd/MM/yyyy")</td>
+                        <td>@item.DiasCalendario</td>
+                        <td>@item.FechaRegistro.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            <a asp-action="Comprobante" asp-route-id="@item.RecomendacionId"
+                               class="btn btn-sm btn-outline-primary">Ver e imprimir</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @if (Model.Registros.Count == 0)
+        {
+            <p class="p-3 text-muted mb-0">No hay recomendaciones registradas por esta cuenta médica.</p>
+        }
+    </div>
+    <p class="text-muted small mt-3">
+        El historial está restringido al médico que registró la recomendación.
+        Los períodos son inclusivos y se expresan en días calendario.
+    </p>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

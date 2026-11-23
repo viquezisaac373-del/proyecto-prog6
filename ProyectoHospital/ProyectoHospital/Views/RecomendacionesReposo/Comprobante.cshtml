@@ -1,0 +1,61 @@
+@model RecomendacionReposoResumen
+@{
+    ViewData["Title"] = "Constancia interna de recomendación";
+}
+<style>
+@@media print {
+    nav, footer, .no-imprimir { display: none !important; }
+    body { background: white !important; }
+    .container { max-width: 100% !important; }
+}
+</style>
+<div class="container my-4 mb-5">
+    @if (TempData["Exito"] is string exito)
+    {
+        <div class="alert alert-success no-imprimir">@exito</div>
+    }
+    <div class="border bg-white rounded p-4">
+        <header class="text-center border-bottom pb-3 mb-4">
+            <h1 class="h4">HOSPINOMENAL</h1>
+            <h2 class="h5">Constancia interna de recomendación médica de reposo</h2>
+            <strong class="text-danger d-block">
+                NO CONSTITUYE INCAPACIDAD OFICIAL DE LA CCSS NI DEL INS
+            </strong>
+            <p class="small mb-0">Folio interno #@Model.RecomendacionId</p>
+        </header>
+
+        <dl class="row">
+            <dt class="col-sm-4">Paciente</dt><dd class="col-sm-8">@Model.Paciente</dd>
+            <dt class="col-sm-4">Identificación en expediente</dt>
+            <dd class="col-sm-8">@(Model.Identificacion ?? "Pendiente")</dd>
+            <dt class="col-sm-4">Médico que registra</dt><dd class="col-sm-8">@Model.Medico</dd>
+            <dt class="col-sm-4">Especialidad registrada</dt>
+            <dd class="col-sm-8">@(Model.Especialidad ?? "No especificada")</dd>
+            <dt class="col-sm-4">Inicio recomendado</dt>
+            <dd class="col-sm-8">@Model.FechaInicio.ToString("dd/MM/yyyy")</dd>
+            <dt class="col-sm-4">Fin recomendado</dt>
+            <dd class="col-sm-8">@Model.FechaFin.ToString("dd/MM/yyyy")</dd>
+            <dt class="col-sm-4">Duración</dt><dd class="col-sm-8">@Model.DiasCalendario días calendario (inclusive)</dd>
+            <dt class="col-sm-4">Fecha de registro</dt>
+            <dd class="col-sm-8">@Model.FechaRegistro.ToString("dd/MM/yyyy HH:mm")</dd>
+        </dl>
+        <section class="border-top pt-3">
+            <h3 class="h6">Justificación clínica</h3>
+            <p style="white-space: pre-wrap">@Model.Justificacion</p>
+        </section>
+        <div class="alert alert-warning mt-4">
+            Documento de uso interno y de orientación al paciente. No sustituye una
+            incapacidad o licencia aprobada por la institución competente; no acredita
+            por sí solo derecho a subsidio económico ni ausencia laboral justificada.
+            Su aceptación y trámite dependen de los procedimientos oficiales aplicables.
+        </div>
+        <p class="small text-muted">
+            Documento generado desde la sesión médica vinculada al profesional.
+            No incluye firma digital certificada ni validación con la CCSS.
+        </p>
+    </div>
+    <div class="d-flex gap-2 mt-3 no-imprimir">
+        <button type="button" onclick="window.print()" class="btn btn-primary">Imprimir comprobante</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Volver al historial</a>
+    </div>
+</div>

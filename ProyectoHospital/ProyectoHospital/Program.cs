@@ -29,6 +29,9 @@ builder.Services.AddScoped<
     ProyectoHospital.Repositories.DisponibilidadMedicaRepository>();
 
 builder.Services.AddScoped<
+    ProyectoHospital.Repositories.RecomendacionesReposoRepository>();
+
+builder.Services.AddScoped<
     ProyectoHospital.Repositories.BitacoraRepository>();
 
 // Alta, consulta y gestión de nacimientos.
