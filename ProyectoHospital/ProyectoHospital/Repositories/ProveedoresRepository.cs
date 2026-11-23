@@ -301,11 +301,16 @@ WHERE p.ProveedorId = @Proveedor AND pp.InventarioId = @Producto
                 nombre = (string)valor;
             }
 
+            // MovimientosInventario tiene triggers AFTER INSERT habilitados.
+            // SQL Server rechaza OUTPUT sin INTO (error 334). Capturar el
+            // identity en una tabla variable preserva la misma transacción.
             const string insertarMovimiento = @"
+DECLARE @MovimientoInsertado TABLE (MovimientoId BIGINT NOT NULL);
 INSERT INTO dbo.MovimientosInventario
     (InventarioId, TipoMovimiento, Cantidad, CostoUnitario, Proveedor, UsuarioId, Observacion)
-OUTPUT INSERTED.MovimientoId
-VALUES (@Producto, N'EntradaCompra', @Cantidad, @Costo, @Proveedor, @Usuario, @Observacion);";
+OUTPUT INSERTED.MovimientoId INTO @MovimientoInsertado (MovimientoId)
+VALUES (@Producto, N'EntradaCompra', @Cantidad, @Costo, @Proveedor, @Usuario, @Observacion);
+SELECT MovimientoId FROM @MovimientoInsertado;";
             long movimientoId;
             using (var cmd = new SqlCommand(insertarMovimiento, cn, tx))
             {

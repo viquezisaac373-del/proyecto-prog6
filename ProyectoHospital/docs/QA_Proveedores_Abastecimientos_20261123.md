@@ -61,6 +61,21 @@ El historial de pantalla muestra **hasta 200 registros**, no una exportación ex
 | PV-13 | Login como médico/cliente, ir a /Proveedores | Acceso denegado |
 | PV-14 | Consultar Bitácoras → Acciones | Usuario admin y operaciones quedan registrados |
 
+## Incidencia corregida: SQL Server 334
+
+En la prueba inicial del abastecimiento, el INSERT en
+`dbo.MovimientosInventario` devolvió el error SQL 334 porque dicha tabla tiene
+triggers AFTER INSERT y el código utilizaba `OUTPUT INSERTED.MovimientoId`
+sin `INTO`.
+
+Se modificó el comando para utilizar `OUTPUT ... INTO @MovimientoInsertado`,
+seguido de `SELECT MovimientoId FROM @MovimientoInsertado` dentro de
+la misma transacción. **Requiere repetir PV-06 y PV-07**; la compilación y
+la escritura real en SQL aún no están verificadas después de esta corrección.
+
+Nunca desactivar los triggers de inventario para esquivar el error: validan
+consistencia de existencias y correspondencia de movimientos.
+
 ## SQL de comprobación
 
 ```sql
