@@ -110,7 +110,7 @@ namespace ProyectoHospital.Repositories
                 N'Notificación' AS Accion,
                 CAST(NULL AS INT) AS UsuarioId,
                 CAST(NULL AS NVARCHAR(50)) AS Usuario,
-                -- Los avisos RN son internos: nunca llamarlos "Enviada".
+                -- Los avisos RN son internos: no implican envio externo.
                 CASE WHEN b.Mensaje LIKE N'RN | %'
                      THEN N'Interna (sin envío)'
                      ELSE b.EstadoEnvio END AS Resultado,
