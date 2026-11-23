@@ -348,7 +348,7 @@ namespace ProyectoHospital.Repositories
                     INSERT INTO dbo.BitacoraNotificaciones
                         (PacienteId, CitaId, Mensaje, EstadoEnvio)
                     SELECT @PacienteId, NULL,
-                           N'RN | Identificación oficial pendiente de asignación. ' +
+                           N'RN | Alta registrada con identificación oficial pendiente. ' +
                            N'Nacimiento #' + CONVERT(NVARCHAR(20), @NacimientoId) +
                            N'. Aviso interno; no se ha enviado correo ni SMS.',
                            N'Pendiente'
@@ -363,7 +363,7 @@ namespace ProyectoHospital.Repositories
                             (PacienteId, CitaId, Mensaje, EstadoEnvio)
                         VALUES (
                             @PacienteId, NULL,
-                            N'RN | Tipo sanguíneo ND: pendiente de tipificación. ' +
+                            N'RN | Alta registrada con tipo sanguíneo ND, pendiente de tipificación. ' +
                             N'Nacimiento #' + CONVERT(NVARCHAR(20), @NacimientoId) +
                             N'. Requiere resultado clínico confirmado.',
                             N'Pendiente'
