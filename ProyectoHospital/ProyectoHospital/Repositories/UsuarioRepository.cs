@@ -51,6 +51,38 @@ namespace ProyectoHospital.Repositories
         }
 
 
+        // Revalidación de sesiones: un usuario desactivado o sin roles activos
+        // no puede continuar usando una cookie emitida antes del cambio.
+        public async Task<(bool Activo, List<string> Roles)> ObtenerEstadoSesionAsync(int usuarioId)
+        {
+            const string sql = @"
+                SELECT u.Activo, r.Nombre_del_Rol
+                FROM dbo.Usuarios AS u
+                LEFT JOIN dbo.UsuarioRol AS ur ON ur.UsuarioId = u.UsuarioId
+                LEFT JOIN dbo.Roles AS r ON r.RolId = ur.RolId AND r.Activo = 1
+                WHERE u.UsuarioId = @UsuarioId;";
+
+            await using var conexion = new SqlConnection(_connectionString);
+            await conexion.OpenAsync();
+
+            await using var comando = new SqlCommand(sql, conexion);
+            comando.Parameters.Add("@UsuarioId", SqlDbType.Int).Value = usuarioId;
+
+            await using var lector = await comando.ExecuteReaderAsync();
+            bool activo = false;
+            var roles = new List<string>();
+
+            while (await lector.ReadAsync())
+            {
+                activo = lector.GetBoolean(0);
+                if (!lector.IsDBNull(1))
+                    roles.Add(lector.GetString(1));
+            }
+
+            return (activo, roles);
+        }
+
+
         // Migra una contraseña validada desde SHA-512 a PasswordHasher (Identity V3).
         // También permite rehash cuando el algoritmo eleva el costo de trabajo.
         public async Task GuardarPasswordIdentityAsync(int usuarioId, string passwordHashIdentity)

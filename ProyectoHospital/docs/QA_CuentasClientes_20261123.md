@@ -47,6 +47,7 @@ El registro público admite únicamente **cédula física nacional de 9 dígitos
 | CL-14 | Login admin y médico tras cambios | Sin regresión de permisos |
 | CL-15 | Consulta de bitácoras | Registra alta/vínculo sin contraseña ni hash |
 | CL-16 | Inicio de sesión como Cliente, abrir Inicio e Información | Inicio muestra opciones propias del cliente; Información abre página distinta con las capacidades y limitaciones del portal |
+| CL-17 | Cliente con sesión abierta en otro navegador es desactivado por admin | En la siguiente solicitud, la cookie se invalida y se exige iniciar sesión de nuevo; no se muestran datos de Mi cuenta ni Catálogo |
 
 ## SQL read-only de verificación
 

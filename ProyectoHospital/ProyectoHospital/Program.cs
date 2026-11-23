@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using ProyectoHospital.Models.Entities;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -50,6 +52,51 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.AccessDeniedPath = "/Account/AccessDenied";
         options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
         options.SlidingExpiration = true;
+
+        // El contenido de una cookie no se actualiza automáticamente al
+        // desactivar cuentas o modificar roles. Revisar la BD en cada solicitud
+        // autenticada para revocar sesiones existentes inmediatamente.
+        options.Events.OnValidatePrincipal = async context =>
+        {
+            bool sesionValida = false;
+
+            if (int.TryParse(
+                    context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier),
+                    out int usuarioId) && usuarioId > 0)
+            {
+                try
+                {
+                    var usuarios = context.HttpContext.RequestServices
+                        .GetRequiredService<ProyectoHospital.Repositories.UsuarioRepository>();
+                    var (activo, rolesActuales) = await usuarios.ObtenerEstadoSesionAsync(usuarioId);
+
+                    var rolesCookie = context.Principal!
+                        .FindAll(ClaimTypes.Role)
+                        .Select(claim => claim.Value)
+                        .ToHashSet(StringComparer.Ordinal);
+
+                    // También revocar cookies con permisos que ya no correspondan.
+                    sesionValida = activo && rolesActuales.Count > 0 &&
+                        rolesCookie.SetEquals(rolesActuales);
+                }
+                catch (Exception ex)
+                {
+                    // En un error de BD, negar acceso antes que conservar
+                    // una sesión cuya autorización no se puede comprobar.
+                    var logger = context.HttpContext.RequestServices
+                        .GetRequiredService<ILoggerFactory>()
+                        .CreateLogger("Hospinomenal.ValidacionSesion");
+                    logger.LogError(ex, "No fue posible revalidar la sesión del usuario {UsuarioId}.", usuarioId);
+                }
+            }
+
+            if (!sesionValida)
+            {
+                context.RejectPrincipal();
+                await context.HttpContext.SignOutAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme);
+            }
+        };
     });
 
 builder.Services.AddAuthorization(options =>
