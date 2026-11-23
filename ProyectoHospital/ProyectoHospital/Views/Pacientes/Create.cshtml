@@ -111,13 +111,21 @@
 
                         <label asp-for="NumeroIdentificacion"
                                class="form-label">
-                            Identificación
+                            Cédula costarricense (9 dígitos)
                         </label>
 
                         <input asp-for="NumeroIdentificacion"
                                class="form-control"
                                inputmode="numeric"
-                               maxlength="25" readonly="@esEdicion" />
+                               maxlength="@(esEdicion ? 25 : 9)"
+                               pattern="@(esEdicion ? null : "[0-9]{9}")"
+                               oninput="@(esEdicion ? null : "this.value=this.value.replace(/[^0-9]/g, '').slice(0, 9)")"
+                               readonly="@esEdicion" />
+                        @if (esEdicion)
+                        {
+                            <div class="form-text">La identificación histórica se conserva.
+                                Su corrección requiere un procedimiento autorizado.</div>
+                        }
 
                         <span asp-validation-for="NumeroIdentificacion"
                               class="text-danger"></span>
@@ -581,18 +589,25 @@
         }
 
         // Validar un teléfono según el país seleccionado.
-        function validarTelefono(campo, selector, contenedorError) {
-
+        function validarTelefono(
+            campo,
+            selector,
+            contenedorError,
+            mostrarAvisoNativo = true
+        ) {
             limpiarError(campo, contenedorError);
 
-            if (!campo.value.trim() || !selector.isValidNumber()) {
+            if (!campo.value.trim() || !selector.isValidNumberPrecise()) {
 
                 const mensaje =
                     "Ingrese un número válido para el país seleccionado.";
 
                 campo.setCustomValidity(mensaje);
                 contenedorError.textContent = mensaje;
-                campo.reportValidity();
+
+                if (mostrarAvisoNativo) {
+                    campo.reportValidity();
+                }
 
                 return false;
             }
@@ -651,6 +666,24 @@
                     "No fue posible cargar la validación telefónica. Recargue la página."
                 );
 
+            });
+
+            // HU12: mostrar validación al salir de cada campo sin forzar
+            // un mensaje emergente mientras el usuario completa el formulario.
+            telefonoVisible.addEventListener("blur", () => {
+                if (telefonosListos) {
+                    validarTelefono(
+                        telefonoVisible, selectorTelefono, errorTelefono, false
+                    );
+                }
+            });
+
+            emergenciaVisible.addEventListener("blur", () => {
+                if (telefonosListos) {
+                    validarTelefono(
+                        emergenciaVisible, selectorEmergencia, errorEmergencia, false
+                    );
+                }
             });
 
             // Quitar los errores cuando se modifique el número.

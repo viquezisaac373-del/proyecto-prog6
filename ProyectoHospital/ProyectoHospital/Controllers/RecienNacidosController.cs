@@ -73,11 +73,13 @@ namespace ProyectoHospital.Controllers
                 // Validación provisional: Género=Femenino en la ficha actual.
                 // Una futura relación clínica de gestación evitará inferirlo
                 // únicamente del género administrativo del expediente.
-                if (!await _repositorio.EsMadreSeleccionableAsync(modelo.MadrePacienteId))
+                if (!await _repositorio.EsMadreSeleccionableAsync(
+                        modelo.MadrePacienteId, modelo.FechaHoraNacimiento!.Value))
                 {
                     ModelState.AddModelError(nameof(modelo.MadrePacienteId),
                         "Seleccione un expediente habilitado como madre. " +
-                        "El paciente debe estar activo y ser elegible según la regla actual.");
+                        "Debe estar activo y tener al menos 10 años a la fecha del parto " +
+                        "(regla provisional; los casos excepcionales requieren revisión clínica).");
                     return await MostrarFormularioAsync(modelo);
                 }
 
@@ -191,6 +193,74 @@ namespace ProyectoHospital.Controllers
             }
 
             return await MostrarIdentificacionAsync(modelo);
+        }
+
+        // Completar tipo sanguíneo del bebé solamente con resultado confirmado.
+        [HttpGet]
+        [Authorize(Roles = "Administrador,Medico,Médico")]
+        public async Task<IActionResult> CompletarTipoSangre(int id)
+        {
+            if (id <= 0)
+                return BadRequest();
+
+            var nombre = await _repositorio.ObtenerNombrePendienteTipificacionAsync(id);
+            if (nombre is null)
+                return NotFound();
+
+            ViewData["NombreBebe"] = nombre;
+            return View(new CompletarTipoSangreRecienNacidoViewModel
+            {
+                PacienteId = id
+            });
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Administrador,Medico,Médico")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CompletarTipoSangre(
+            CompletarTipoSangreRecienNacidoViewModel modelo)
+        {
+            if (!ModelState.IsValid)
+            {
+                ViewData["NombreBebe"] =
+                    await _repositorio.ObtenerNombrePendienteTipificacionAsync(modelo.PacienteId);
+                return View(modelo);
+            }
+
+            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier),
+                    out int usuarioId) || usuarioId <= 0)
+                return Forbid();
+
+            try
+            {
+                await _repositorio.CompletarTipoSangreAsync(modelo, usuarioId);
+                TempData["MensajeExito"] =
+                    $"Tipificación registrada para el paciente #{modelo.PacienteId}, " +
+                    "con referencia clínica y auditoría.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (SqlException ex) when (ex.Number == 51981)
+            {
+                ModelState.AddModelError(string.Empty,
+                    "El paciente no tiene tipificación pendiente o el nacimiento está inactivo.");
+            }
+            catch (SqlException ex)
+            {
+                _logger.LogError(ex, "Error SQL al completar tipo sanguíneo.");
+                ModelState.AddModelError(string.Empty,
+                    "No fue posible completar la tipificación. Verifique la compatibilidad SQL.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al completar tipo sanguíneo.");
+                ModelState.AddModelError(string.Empty,
+                    "No fue posible completar la operación.");
+            }
+
+            ViewData["NombreBebe"] =
+                await _repositorio.ObtenerNombrePendienteTipificacionAsync(modelo.PacienteId)
+                ?? "Paciente";
+            return View(modelo);
         }
 
         // Edición de datos administrativos del bebé y detalles del nacimiento.

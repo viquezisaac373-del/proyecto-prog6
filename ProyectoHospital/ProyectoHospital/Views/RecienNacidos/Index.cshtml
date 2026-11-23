@@ -7,6 +7,13 @@
     bool puedeAnular = User.IsInRole("Administrador");
     int pendientes = Model.Count(n => n.NacimientoActivo && n.PacienteActivo
                                       && string.IsNullOrWhiteSpace(n.NumeroIdentificacion));
+    // Plazo de SEGUIMIENTO ADMINISTRATIVO provisional; no plazo médico ni legal.
+    const int diasSeguimientoSangre = 30;
+    int pendientesSangre = Model.Count(n => n.NacimientoActivo && n.PacienteActivo
+                                            && n.TipoSangre == "ND");
+    int avisosVencidos = Model.Count(n => n.NacimientoActivo && n.PacienteActivo
+                                         && n.TipoSangre == "ND"
+                                         && n.FechaHoraNacimiento.AddDays(diasSeguimientoSangre) < DateTime.Now);
 }
 
 <div class="container mt-4 mb-5">
@@ -27,7 +34,12 @@
 
     <div class="alert alert-light border" role="status">
         <strong>@Model.Count</strong> nacimientos registrados ·
-        <strong>@pendientes</strong> identificaciones pendientes
+        <strong>@pendientes</strong> identificaciones pendientes ·
+        <strong>@pendientesSangre</strong> tipificaciones sanguíneas pendientes
+        @if (avisosVencidos > 0)
+        {
+            <span class="text-danger"> · @avisosVencidos con aviso de seguimiento administrativo</span>
+        }
     </div>
 
     <div class="card shadow-sm">
@@ -49,6 +61,7 @@
                                 <th scope="col">Madre</th>
                                 <th scope="col">Fecha y hora</th>
                                 <th scope="col">Identificación</th>
+                                <th scope="col">Tipo sanguíneo</th>
                                 <th scope="col">Estado</th>
                                 <th scope="col">Acciones</th>
                             </tr>
@@ -70,6 +83,21 @@
                                         else
                                         {
                                             <span>@bebe.NumeroIdentificacion</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (bebe.TipoSangre == "ND")
+                                        {
+                                            <span class="badge bg-warning text-dark">ND · Pendiente</span>
+                                            @if (bebe.NacimientoActivo && bebe.PacienteActivo &&
+                                                 bebe.FechaHoraNacimiento.AddDays(diasSeguimientoSangre) < DateTime.Now)
+                                            {
+                                                <div class="text-danger small">Revisar seguimiento</div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span>@bebe.TipoSangre</span>
                                         }
                                     </td>
                                     <td>
@@ -96,6 +124,14 @@
                                                        asp-route-id="@bebe.PacienteId"
                                                        class="btn btn-sm btn-outline-primary">
                                                         Asignar ID
+                                                    </a>
+                                                }
+                                                @if (puedeEditar && bebe.TipoSangre == "ND")
+                                                {
+                                                    <a asp-action="CompletarTipoSangre"
+                                                       asp-route-id="@bebe.PacienteId"
+                                                       class="btn btn-sm btn-outline-warning">
+                                                        Completar tipo
                                                     </a>
                                                 }
                                                 @if (puedeEditar)
@@ -132,5 +168,8 @@
     <p class="text-muted small mt-3">
         Anular un nacimiento no elimina ni desactiva el expediente del paciente.
         Las modificaciones quedan registradas en la bitácora del sistema.
+        Los avisos de ND aparecen al abrir este listado; no son notificaciones
+        automáticas por correo o SMS. El plazo interno de 30 días es provisional
+        y debe validarlo el Product Owner: no equivale a una obligación médica de tipificación.
     </p>
 </div>

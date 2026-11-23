@@ -1,5 +1,7 @@
 ﻿
 using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
+using PhoneNumbers;
 
 namespace ProyectoHospital.Models.ViewModels
 {
@@ -15,13 +17,11 @@ namespace ProyectoHospital.Models.ViewModels
         public int PacienteId { get; set; }
 
         // IDENTIFICACIÓN
-        // Entre 9 y 25 dígitos, sin aceptar solamente ceros.
-        // Regla provisional para documentos numéricos.
+        // Las ALTAS nuevas solo admiten cédula nacional (9 dígitos).
+        // En edición conservamos las identificaciones históricas tal como están,
+        // porque la edición ordinaria NO modifica este campo en SQL.
         [Required(ErrorMessage = "La identificación es obligatoria.")]
         [StringLength(25)]
-        [RegularExpression(
-            @"^(?!0+$)[0-9]{9,25}$",
-            ErrorMessage = "Ingrese entre 9 y 25 dígitos. No se permiten únicamente ceros.")]
         public string NumeroIdentificacion { get; set; } = "";
 
         // NOMBRE
@@ -77,8 +77,8 @@ namespace ProyectoHospital.Models.ViewModels
         [StringLength(200)]
         [EmailAddress(ErrorMessage = "Ingrese un correo válido.")]
         [RegularExpression(
-            @"^[^@\s]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$",
-            ErrorMessage = "Ingrese un dominio de correo completo.")]
+            @"^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$",
+            ErrorMessage = "Ingrese un correo válido, sin puntos consecutivos y con dominio completo.")]
         public string Correo { get; set; } = "";
 
         // DIRECCIÓN
@@ -110,6 +110,79 @@ namespace ProyectoHospital.Models.ViewModels
         public IEnumerable<ValidationResult> Validate(
             ValidationContext validationContext)
         {
+            if (PacienteId == 0 && !System.Text.RegularExpressions.Regex.IsMatch(
+                    NumeroIdentificacion ?? "", @"^(?!0{9}$)[0-9]{9}$"))
+            {
+                yield return new ValidationResult(
+                    "Para nuevos pacientes ingrese una cédula costarricense de exactamente 9 dígitos.",
+                    new[] { nameof(NumeroIdentificacion) });
+            }
+
+            // HU12: la selección telefónica del navegador no sustituye
+            // la validación del servidor. El formulario envía +<país><número>
+            // y SQL solo retiene los dígitos después de validarlos.
+            var utilidadTelefonica = PhoneNumberUtil.GetInstance();
+            var telefonos = new[]
+            {
+                (Valor: NumeroTelefono, Campo: nameof(NumeroTelefono)),
+                (Valor: TelefonoEmergencia, Campo: nameof(TelefonoEmergencia))
+            };
+
+            foreach (var telefono in telefonos)
+            {
+                if (string.IsNullOrWhiteSpace(telefono.Valor))
+                    continue; // Required ya comprueba los campos vacíos.
+
+                bool valido;
+                try
+                {
+                    // En alta/edición el selector JS entrega E.164 con '+',
+                    // pero admitimos también los 8 dígitos nacionales.
+                    var analizado = utilidadTelefonica.Parse(telefono.Valor, "CR");
+                    valido = utilidadTelefonica.IsValidNumber(analizado);
+                }
+                catch (NumberParseException)
+                {
+                    valido = false;
+                }
+
+                if (!valido)
+                    yield return new ValidationResult(
+                        "Ingrese un número telefónico válido para el país correspondiente.",
+                        new[] { telefono.Campo });
+            }
+
+            // HU12: nombres de paciente y contacto sin números ni símbolos
+            // ajenos a la escritura de nombres; admite tildes y Unicode.
+            var camposNombre = new[]
+            {
+                (Valor: Nombre, Campo: nameof(Nombre)),
+                (Valor: Apellidos, Campo: nameof(Apellidos)),
+                (Valor: ContactoEmergencia, Campo: nameof(ContactoEmergencia))
+            };
+
+            foreach (var dato in camposNombre)
+            {
+                if (string.IsNullOrWhiteSpace(dato.Valor))
+                    continue; // Required cubre los valores vacíos.
+
+                if (!Regex.IsMatch(dato.Valor, @"^(?=.*\p{L})[\p{L}\p{M} .'\u2019-]+$"))
+                    yield return new ValidationResult(
+                        "Ingrese un nombre válido: letras, espacios, apóstrofos, guiones o puntos.",
+                        new[] { dato.Campo });
+            }
+
+            // HU12: dirección descriptiva. No exige códigos postales ni
+            // direcciones estructuradas que el esquema actual no soporta.
+            if (!string.IsNullOrWhiteSpace(Direccion))
+            {
+                var direccion = Direccion.Trim();
+                if (direccion.Length < 3 || !Regex.IsMatch(direccion, @"\p{L}"))
+                    yield return new ValidationResult(
+                        "Ingrese una dirección descriptiva que incluya letras.",
+                        new[] { nameof(Direccion) });
+            }
+
             // La fecha de nacimiento no puede ser posterior a hoy.
             if (FechaNacimiento.HasValue &&
                 FechaNacimiento.Value.Date > DateTime.Today)

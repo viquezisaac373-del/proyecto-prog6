@@ -12,7 +12,8 @@ namespace ProyectoHospital.Repositories
     public sealed record RecienNacidoResumen(
         int PacienteId, int NacimientoId, string NombreCompleto,
         string NombreMadre, DateTime FechaHoraNacimiento,
-        string? NumeroIdentificacion, bool NacimientoActivo, bool PacienteActivo);
+        string? NumeroIdentificacion, bool NacimientoActivo, bool PacienteActivo,
+        string TipoSangre);
 
     /// <summary>
     /// Acceso a datos del flujo de recién nacidos.
@@ -39,7 +40,9 @@ namespace ProyectoHospital.Repositories
                        CONCAT(Nombre, N' ', Apellidos, N' (',
                               COALESCE(Numero_Identificacion, N'Sin identificación'), N')')
                 FROM dbo.Pacientes
-                WHERE Activo = 1 AND Genero = N'Femenino'
+                WHERE Activo = 1
+                  AND Genero = N'Femenino'
+                  AND DATEADD(YEAR, 10, Fecha_Nacimiento) <= CONVERT(DATE, SYSDATETIME())
                 ORDER BY Apellidos, Nombre, PacienteId;";
 
             var opciones = new List<OpcionRegistro>();
@@ -59,19 +62,25 @@ namespace ProyectoHospital.Repositories
         /// La regla por género es provisional hasta registrar explícitamente
         /// la relación de persona gestante (criterio pendiente del PO).
         /// </summary>
-        public async Task<bool> EsMadreSeleccionableAsync(int pacienteId)
+        public async Task<bool> EsMadreSeleccionableAsync(int pacienteId, DateTime fechaNacimientoBebe)
         {
+            // Límite administrativo provisional de 10 años en la fecha del parto.
+            // Evita asociar recién nacidos como madres. Casos excepcionales
+            // requieren proceso clínico independiente aprobado por el PO.
             const string sql = @"
                 SELECT COUNT(1)
                 FROM dbo.Pacientes
                 WHERE PacienteId = @PacienteId
                   AND Activo = 1
-                  AND Genero = N'Femenino';";
+                  AND Genero = N'Femenino'
+                  AND DATEADD(YEAR, 10, Fecha_Nacimiento) <= CONVERT(DATE, @FechaNacimientoBebe);";
 
             await using var conexion = new SqlConnection(_connectionString);
             await conexion.OpenAsync();
             await using var comando = new SqlCommand(sql, conexion);
             comando.Parameters.Add("@PacienteId", SqlDbType.Int).Value = pacienteId;
+            comando.Parameters.Add("@FechaNacimientoBebe", SqlDbType.DateTime2).Value =
+                fechaNacimientoBebe;
             return Convert.ToInt32(await comando.ExecuteScalarAsync()) == 1;
         }
 
@@ -111,7 +120,8 @@ namespace ProyectoHospital.Repositories
                        n.Fecha_Hora_Nacimiento,
                        b.Numero_Identificacion,
                        n.Activo,
-                       b.Activo
+                       b.Activo,
+                       b.TipoSangre
                 FROM dbo.Nacimientos AS n
                 INNER JOIN dbo.Pacientes AS b ON b.PacienteId = n.BebePacienteId
                 INNER JOIN dbo.Pacientes AS m ON m.PacienteId = n.MadrePacienteId
@@ -132,7 +142,8 @@ namespace ProyectoHospital.Repositories
                     lector.GetDateTime(4),
                     lector.IsDBNull(5) ? null : lector.GetString(5),
                     lector.GetBoolean(6),
-                    lector.GetBoolean(7)));
+                    lector.GetBoolean(7),
+                    lector.GetString(8)));
 
             return nacimientos;
         }
@@ -184,8 +195,15 @@ namespace ProyectoHospital.Repositories
 
             return EjecutarConAuditoriaAsync(usuarioId, async conexion =>
             {
+                // El SP existente inserta ND. La tipificación confirmada se
+                // incorpora en la MISMA transacción externa para evitar altas
+                // parciales si la actualización de laboratorio falla.
+                await using var transaccion =
+                    (SqlTransaction)await conexion.BeginTransactionAsync();
+                try
+                {
                 await using var comando =
-                    new SqlCommand("dbo.usp_RegistrarRecienNacido", conexion);
+                    new SqlCommand("dbo.usp_RegistrarRecienNacido", conexion, transaccion);
                 comando.CommandType = CommandType.StoredProcedure;
 
                 comando.Parameters.Add("@MadrePacienteId", SqlDbType.Int).Value =
@@ -246,7 +264,54 @@ namespace ProyectoHospital.Repositories
                         "La operación no devolvió los identificadores del nacimiento.");
                 }
 
+                if (modelo.TipoSangre != "ND")
+                {
+                    const string actualizarTipo = @"
+                        UPDATE dbo.Pacientes SET TipoSangre = @TipoSangre
+                        WHERE PacienteId = @PacienteId AND TipoSangre = N'ND';
+                        IF @@ROWCOUNT <> 1
+                            THROW 51980, N'No se pudo registrar la tipificación del recién nacido.', 1;";
+                    await using var actualizacion =
+                        new SqlCommand(actualizarTipo, conexion, transaccion);
+                    actualizacion.Parameters.Add("@PacienteId", SqlDbType.Int).Value =
+                        pacienteId;
+                    actualizacion.Parameters.Add("@TipoSangre", SqlDbType.NVarChar, 3).Value =
+                        modelo.TipoSangre;
+                    await actualizacion.ExecuteNonQueryAsync();
+
+                    // Justificación de la tipificación confirmada en el mismo COMMIT.
+                    const string registrarEvidencia = @"
+                        INSERT INTO dbo.BitacoraAuditoria
+                            (UsuarioId, Accion, Tabla_Modificada, RegistroId,
+                             VAnteriores, VNuevos, Objeto)
+                        VALUES
+                            (TRY_CONVERT(INT, SESSION_CONTEXT(N'UsuarioId')),
+                             N'CONFIRMACION_TIPIFICACION', N'Pacientes',
+                             CONVERT(NVARCHAR(100), @PacienteId),
+                             N'{""TipoSangre"":""ND""}',
+                             (SELECT @TipoSangre AS TipoSangre,
+                                     @Referencia AS ReferenciaLaboratorio
+                              FOR JSON PATH, WITHOUT_ARRAY_WRAPPER),
+                             N'RecienNacidos');";
+                    await using var auditoria =
+                        new SqlCommand(registrarEvidencia, conexion, transaccion);
+                    auditoria.Parameters.Add("@PacienteId", SqlDbType.Int).Value = pacienteId;
+                    auditoria.Parameters.Add("@TipoSangre", SqlDbType.NVarChar, 3).Value =
+                        modelo.TipoSangre;
+                    auditoria.Parameters.Add("@Referencia", SqlDbType.NVarChar, 200).Value =
+                        modelo.ReferenciaTipoSangre!.Trim();
+                    await auditoria.ExecuteNonQueryAsync();
+                }
+
+                await transaccion.CommitAsync();
                 return (pacienteId, nacimientoId);
+                }
+                catch
+                {
+                    try { await transaccion.RollbackAsync(); }
+                    catch (Exception ex) { _logger.LogError(ex, "Error al revertir alta de RN."); }
+                    throw;
+                }
             });
         }
 
@@ -266,6 +331,91 @@ namespace ProyectoHospital.Repositories
 
                 await comando.ExecuteNonQueryAsync();
                 return true;
+            });
+        }
+
+        /// <summary>
+        /// Recupera el nombre de un RN cuyo grupo sanguíneo sigue ND.
+        /// </summary>
+        public async Task<string?> ObtenerNombrePendienteTipificacionAsync(int pacienteId)
+        {
+            const string sql = @"
+                SELECT TOP (1) CONCAT(p.Nombre, N' ', p.Apellidos)
+                FROM dbo.Pacientes AS p
+                INNER JOIN dbo.Nacimientos AS n ON n.BebePacienteId = p.PacienteId
+                WHERE p.PacienteId = @PacienteId
+                  AND p.Activo = 1 AND n.Activo = 1
+                  AND p.TipoSangre = N'ND';";
+            await using var conexion = new SqlConnection(_connectionString);
+            await conexion.OpenAsync();
+            await using var comando = new SqlCommand(sql, conexion);
+            comando.Parameters.Add("@PacienteId", SqlDbType.Int).Value = pacienteId;
+            return await comando.ExecuteScalarAsync() as string;
+        }
+
+        /// <summary>
+        /// Completa la tipificación de un RN: solo ND -> valor confirmado.
+        /// El trigger de Pacientes registra UPDATE; el segundo evento anota
+        /// la referencia de laboratorio y la identidad responsable.
+        /// </summary>
+        public Task<bool> CompletarTipoSangreAsync(
+            CompletarTipoSangreRecienNacidoViewModel modelo, int usuarioId)
+        {
+            return EjecutarConAuditoriaAsync(usuarioId, async conexion =>
+            {
+                const string sql = @"
+                    SET NOCOUNT ON;
+                    UPDATE dbo.Pacientes
+                    SET TipoSangre = @TipoSangre
+                    WHERE PacienteId = @PacienteId
+                      AND TipoSangre = N'ND' AND Activo = 1
+                      AND EXISTS (
+                          SELECT 1 FROM dbo.Nacimientos AS n
+                          WHERE n.BebePacienteId = @PacienteId
+                            AND n.Activo = 1
+                      );
+
+                    IF @@ROWCOUNT <> 1
+                        THROW 51981, N'El nacimiento no tiene tipificacion pendiente.', 1;
+
+                    INSERT INTO dbo.BitacoraAuditoria
+                        (UsuarioId, Accion, Tabla_Modificada, RegistroId,
+                         VAnteriores, VNuevos, Objeto)
+                    VALUES
+                        (TRY_CONVERT(INT, SESSION_CONTEXT(N'UsuarioId')),
+                         N'CONFIRMACION_TIPIFICACION', N'Pacientes',
+                         CONVERT(NVARCHAR(100), @PacienteId),
+                         N'{""TipoSangre"":""ND""}',
+                         (SELECT @TipoSangre AS TipoSangre,
+                                 @Referencia AS ReferenciaLaboratorio
+                          FOR JSON PATH, WITHOUT_ARRAY_WRAPPER),
+                         N'RecienNacidos');
+                ";
+
+                await using var transaccion =
+                    (SqlTransaction)await conexion.BeginTransactionAsync();
+                try
+                {
+                    await using var comando = new SqlCommand(sql, conexion, transaccion);
+                    comando.Parameters.Add("@PacienteId", SqlDbType.Int).Value =
+                        modelo.PacienteId;
+                    comando.Parameters.Add("@TipoSangre", SqlDbType.NVarChar, 3).Value =
+                        modelo.TipoSangre;
+                    comando.Parameters.Add("@Referencia", SqlDbType.NVarChar, 200).Value =
+                        modelo.ReferenciaLaboratorio.Trim();
+                    await comando.ExecuteNonQueryAsync();
+                    await transaccion.CommitAsync();
+                    return true;
+                }
+                catch
+                {
+                    try { await transaccion.RollbackAsync(); }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error al revertir confirmación de tipo sanguíneo.");
+                    }
+                    throw;
+                }
             });
         }
 
