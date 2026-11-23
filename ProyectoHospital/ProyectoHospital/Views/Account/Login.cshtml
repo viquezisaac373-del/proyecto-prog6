@@ -15,6 +15,11 @@
                     <p class="text-muted mb-0">Ingrese sus credenciales para acceder a Hospinomenal.</p>
                 </div>
 
+                @if (TempData["Exito"] is string exito)
+                {
+                    <div class="alert alert-success" role="status">@exito</div>
+                }
+
                 <form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" novalidate>
                     @Html.AntiForgeryToken()
 
@@ -38,7 +43,7 @@
         </div>
 
         <p class="text-center small text-muted mt-3 mb-0">
-            Acceso exclusivo para personal autorizado del hospital.
+            ¿Sos cliente? <a asp-controller="CuentaCliente" asp-action="Registrar">Crear cuenta de cliente</a>
         </p>
     </div>
 </div>

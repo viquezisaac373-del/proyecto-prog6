@@ -1,0 +1,52 @@
+@model VincularClienteViewModel
+@{
+    ViewData["Title"] = "Crear cuenta para cliente existente";
+}
+<div class="container my-4">
+    <h1 class="h3">Vincular cuenta a un cliente existente</h1>
+    <p class="text-muted">Solo administración. Verifique personalmente la identidad antes de asignar credenciales.</p>
+    @if (Model.Clientes.Count == 0)
+    {
+        <div class="alert alert-info">No hay clientes activos pendientes de vinculación.</div>
+        <a asp-controller="Usuarios" asp-action="Index" class="btn btn-outline-secondary">Volver</a>
+    }
+    else
+    {
+        <form asp-action="Vincular" method="post" asp-antiforgery="true" class="card">
+            <div class="card-body">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="mb-3">
+                    <label asp-for="ClienteId" class="form-label">Cliente</label>
+                    <select asp-for="ClienteId" class="form-select">
+                        <option value="0">Seleccione un cliente...</option>
+                        @foreach (var c in Model.Clientes)
+                        {
+                            <option value="@c.ClienteId">#@c.ClienteId — @c.NombreCompleto — @c.Identificacion</option>
+                        }
+                    </select>
+                    <span asp-validation-for="ClienteId" class="text-danger"></span>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-12">
+                        <label asp-for="NombreUsuario" class="form-label"></label>
+                        <input asp-for="NombreUsuario" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="NombreUsuario" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Clave" class="form-label">Contraseña (mínimo 12 caracteres)</label>
+                        <input asp-for="Clave" type="password" class="form-control" autocomplete="new-password" />
+                        <span asp-validation-for="Clave" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ConfirmacionClave" class="form-label">Confirmar contraseña</label>
+                        <input asp-for="ConfirmacionClave" type="password" class="form-control" autocomplete="new-password" />
+                        <span asp-validation-for="ConfirmacionClave" class="text-danger"></span>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Crear cuenta de cliente</button>
+                <a asp-controller="Usuarios" asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    }
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

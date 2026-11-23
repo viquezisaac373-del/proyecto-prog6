@@ -22,6 +22,7 @@ public sealed class UsuarioResumen
     public bool Activo { get; set; }
     public int? EmpleadoId { get; set; }
     public string? Empleado { get; set; }
+    public string? Cliente { get; set; }
     public string? Puesto { get; set; }
     public string Roles { get; set; } = string.Empty;
 }

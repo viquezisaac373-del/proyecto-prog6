@@ -23,11 +23,24 @@
                         Inicio
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" asp-controller="Modulos" asp-action="Index">
-                        Módulos
-                    </a>
-                </li>
+                @if (User.IsInRole("Administrador") || User.IsInRole("Medico") ||
+                     User.IsInRole("Médico") || User.IsInRole("Secretaria"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Modulos" asp-action="Index">
+                            Módulos
+                        </a>
+                    </li>
+                }
+                @if (User.IsInRole("Cliente"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="CuentaCliente" asp-action="MiCuenta">Mi cuenta</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="CuentaCliente" asp-action="Catalogo">Catálogo</a>
+                    </li>
+                }
                 @if (User.IsInRole("Administrador") || User.IsInRole("Medico") ||
                      User.IsInRole("Médico") || User.IsInRole("Secretaria"))
                 {

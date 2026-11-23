@@ -24,14 +24,19 @@ public sealed class UsuarioGestionRepository
 SELECT u.UsuarioId, u.Usuario, u.Activo, u.EmpleadoId,
        CASE WHEN e.EmpleadoId IS NULL THEN NULL
             ELSE CONCAT(e.Nombre, N' ', e.Apellidos) END AS Empleado,
+       CASE WHEN c.ClienteId IS NULL THEN NULL
+            ELSE CONCAT(c.Nombre, N' ', c.Apellidos) END AS Cliente,
        e.Puesto,
        COALESCE(STRING_AGG(r.Nombre_del_Rol, N', '), N'') AS Roles
 FROM dbo.Usuarios AS u
 LEFT JOIN dbo.Empleados AS e ON e.EmpleadoId = u.EmpleadoId
+LEFT JOIN dbo.UsuarioCliente AS uc ON uc.UsuarioId = u.UsuarioId
+LEFT JOIN dbo.Clientes AS c ON c.ClienteId = uc.ClienteId
 LEFT JOIN dbo.UsuarioRol AS ur ON ur.UsuarioId = u.UsuarioId
 LEFT JOIN dbo.Roles AS r ON r.RolId = ur.RolId
 GROUP BY u.UsuarioId, u.Usuario, u.Activo, u.EmpleadoId,
-         e.EmpleadoId, e.Nombre, e.Apellidos, e.Puesto
+         e.EmpleadoId, e.Nombre, e.Apellidos, e.Puesto,
+         c.ClienteId, c.Nombre, c.Apellidos
 ORDER BY u.Usuario;";
 
         var lista = new List<UsuarioResumen>();
@@ -48,8 +53,9 @@ ORDER BY u.Usuario;";
                 Activo = lector.GetBoolean(2),
                 EmpleadoId = lector.IsDBNull(3) ? null : lector.GetInt32(3),
                 Empleado = lector.IsDBNull(4) ? null : lector.GetString(4),
-                Puesto = lector.IsDBNull(5) ? null : lector.GetString(5),
-                Roles = lector.GetString(6)
+                Cliente = lector.IsDBNull(5) ? null : lector.GetString(5),
+                Puesto = lector.IsDBNull(6) ? null : lector.GetString(6),
+                Roles = lector.GetString(7)
             });
         }
         return lista;

@@ -9,6 +9,7 @@
             <p class="text-muted mb-0">Cuentas de acceso, empleados y roles del hospital.</p>
         </div>
         <div class="d-flex gap-2">
+            <a asp-controller="ClientesUsuarios" asp-action="Vincular" class="btn btn-outline-primary">Vincular cliente existente</a>
             <a asp-action="Vincular" class="btn btn-outline-primary">Vincular empleado existente (@Model.CantidadSinCuenta)</a>
             <a asp-action="Crear" class="btn btn-primary">Nuevo empleado y usuario</a>
         </div>
@@ -45,8 +46,8 @@
             {
                 <tr>
                     <td><strong>@usuario.Usuario</strong> <small class="text-muted">(#@usuario.UsuarioId)</small></td>
-                    <td>@(usuario.Empleado ?? "Sin vincular")</td>
-                    <td>@(usuario.Puesto ?? "—")</td>
+                    <td>@(usuario.Empleado ?? usuario.Cliente ?? "Sin vincular")</td>
+                    <td>@(usuario.Puesto ?? (usuario.Cliente is not null ? "Cliente" : "—"))</td>
                     <td>@(string.IsNullOrWhiteSpace(usuario.Roles) ? "Sin rol" : usuario.Roles)</td>
                     <td>
                         @if (usuario.Activo)

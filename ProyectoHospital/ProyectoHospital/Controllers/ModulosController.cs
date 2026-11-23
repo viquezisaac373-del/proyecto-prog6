@@ -4,7 +4,7 @@ using ProyectoHospital.Models.ViewModels;
 
 namespace ProyectoHospital.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Administrador,Medico,Médico,Secretaria")]
     public class ModulosController : Controller
     {
         public IActionResult Index()

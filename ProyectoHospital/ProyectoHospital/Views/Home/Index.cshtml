@@ -17,11 +17,16 @@
                     de un hospital y acceder a los módulos habilitados según el
                     perfil de cada usuario.
                 </p>
-                <a asp-controller="Modulos"
-                   asp-action="Index"
-                   class="btn btn-primary mt-2">
-                    Ir al panel de módulos
-                </a>
+                @if (User.IsInRole("Cliente"))
+                {
+                    <a asp-controller="CuentaCliente" asp-action="MiCuenta"
+                       class="btn btn-primary mt-2">Ir a mi cuenta</a>
+                }
+                else
+                {
+                    <a asp-controller="Modulos" asp-action="Index"
+                       class="btn btn-primary mt-2">Ir al panel de módulos</a>
+                }
             </div>
             <div class="col-md-4 text-center">
                 <img src="~/images/logo.jpeg"
@@ -72,11 +77,16 @@
             La gestión de pacientes requiere permisos de administrador en esta etapa.
         </p>
         <div class="d-flex gap-2 flex-wrap">
-            <a asp-controller="Modulos"
-               asp-action="Index"
-               class="btn btn-outline-primary">
-                Ver módulos
-            </a>
+            @if (!User.IsInRole("Cliente"))
+            {
+                <a asp-controller="Modulos" asp-action="Index"
+                   class="btn btn-outline-primary">Ver módulos</a>
+            }
+            else
+            {
+                <a asp-controller="CuentaCliente" asp-action="Catalogo"
+                   class="btn btn-outline-primary">Ver catálogo de productos</a>
+            }
             @if (User.IsInRole("Administrador"))
             {
                 <a asp-controller="Pacientes"

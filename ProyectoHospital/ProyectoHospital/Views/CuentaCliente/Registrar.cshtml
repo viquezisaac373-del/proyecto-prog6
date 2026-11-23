@@ -1,0 +1,77 @@
+@model RegistroClienteViewModel
+@{
+    ViewData["Title"] = "Crear cuenta de cliente";
+    Layout = "_LayoutLogin";
+}
+<div class="container py-4" style="max-width:860px">
+    <h1 class="h3">Crear cuenta de cliente</h1>
+    <p class="text-muted">Registro para acceder al portal de clientes. Un expediente clínico no se crea por registrarse aquí.</p>
+    <form asp-action="Registrar" asp-controller="CuentaCliente" method="post" asp-antiforgery="true" class="card shadow-sm">
+        <div class="card-body p-4">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <h2 class="h5">Identificación y contacto</h2>
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label asp-for="TipoIdentificacion" class="form-label"></label>
+                    <select asp-for="TipoIdentificacion" class="form-select">
+                        <option value="Cedula">Cédula física (9 dígitos)</option>
+                        <option value="DIMEX">DIMEX (11 o 12 dígitos)</option>
+                    </select>
+                    <span asp-validation-for="TipoIdentificacion" class="text-danger"></span>
+                </div>
+                <div class="col-md-8">
+                    <label asp-for="NumeroIdentificacion" class="form-label"></label>
+                    <input asp-for="NumeroIdentificacion" class="form-control" maxlength="12" inputmode="numeric" autocomplete="off" />
+                    <span asp-validation-for="NumeroIdentificacion" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Nombre" class="form-label"></label>
+                    <input asp-for="Nombre" class="form-control" maxlength="100" autocomplete="given-name" />
+                    <span asp-validation-for="Nombre" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Apellidos" class="form-label"></label>
+                    <input asp-for="Apellidos" class="form-control" maxlength="130" autocomplete="family-name" />
+                    <span asp-validation-for="Apellidos" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Telefono" class="form-label"></label>
+                    <input asp-for="Telefono" class="form-control" maxlength="20" inputmode="numeric" autocomplete="tel" />
+                    <span asp-validation-for="Telefono" class="text-danger"></span>
+                </div>
+            </div>
+            <h2 class="h5">Datos para ingresar</h2>
+            <div class="row g-3 mb-3">
+                <div class="col-md-12">
+                    <label asp-for="NombreUsuario" class="form-label"></label>
+                    <input asp-for="NombreUsuario" class="form-control" maxlength="50" autocomplete="username" />
+                    <span asp-validation-for="NombreUsuario" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Clave" class="form-label"></label>
+                    <input asp-for="Clave" type="password" class="form-control" autocomplete="new-password" minlength="12" />
+                    <span asp-validation-for="Clave" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ConfirmacionClave" class="form-label"></label>
+                    <input asp-for="ConfirmacionClave" type="password" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="ConfirmacionClave" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="alert alert-info small">
+                Sus datos de identificación y contacto se utilizarán para crear y administrar la cuenta de cliente y
+                relacionar las operaciones comerciales autorizadas. No se crea ni consulta un expediente médico.
+                Para rectificar sus datos o gestionar su cuenta, contacte a administración.
+            </div>
+            <div class="form-check mb-3">
+                <input asp-for="AceptaTratamiento" type="checkbox" class="form-check-input" />
+                <label asp-for="AceptaTratamiento" class="form-check-label">He leído y acepto el tratamiento de datos para el registro indicado.</label>
+                <span asp-validation-for="AceptaTratamiento" class="text-danger d-block"></span>
+            </div>
+            <button type="submit" class="btn btn-primary">Crear cuenta</button>
+            <a asp-controller="Account" asp-action="Login" class="btn btn-outline-secondary">Volver al inicio de sesión</a>
+        </div>
+    </form>
+    <p class="text-muted small mt-3">Si ya está registrado como cliente, solicite vincular una cuenta a administración para evitar duplicar sus datos.</p>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
