@@ -44,7 +44,8 @@ public sealed class RegistroClienteViewModel
     [Display(Name = "Confirmar contraseña")]
     public string ConfirmacionClave { get; set; } = string.Empty;
 
-    [Range(typeof(bool), "true", "true", ErrorMessage = "Debe aceptar el tratamiento de datos indicado.")]
+    // La confirmación booleana se valida explícitamente en el POST.
+    // Range<bool> genera data-val-range incompatible con algunos validadores jQuery.
     public bool AceptaTratamiento { get; set; }
 }
 

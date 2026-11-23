@@ -54,6 +54,10 @@ public sealed class CuentaClienteController : Controller
             ModelState.AddModelError(nameof(modelo.NumeroIdentificacion),
                 "El DIMEX debe tener 11 o 12 dígitos y no iniciar con cero.");
 
+        if (!modelo.AceptaTratamiento)
+            ModelState.AddModelError(nameof(modelo.AceptaTratamiento),
+                "Debe aceptar el tratamiento de datos indicado.");
+
         if (!ModelState.IsValid)
             return View(modelo);
 

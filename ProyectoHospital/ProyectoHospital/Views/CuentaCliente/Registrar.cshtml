@@ -64,7 +64,7 @@
                 Para rectificar sus datos o gestionar su cuenta, contacte a administración.
             </div>
             <div class="form-check mb-3">
-                <input asp-for="AceptaTratamiento" type="checkbox" class="form-check-input" />
+                <input asp-for="AceptaTratamiento" type="checkbox" class="form-check-input" required="required" />
                 <label asp-for="AceptaTratamiento" class="form-check-label">He leído y acepto el tratamiento de datos para el registro indicado.</label>
                 <span asp-validation-for="AceptaTratamiento" class="text-danger d-block"></span>
             </div>
