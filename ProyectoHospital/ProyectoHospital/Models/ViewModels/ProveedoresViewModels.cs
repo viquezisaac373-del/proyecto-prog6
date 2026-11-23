@@ -52,7 +52,7 @@ public sealed class RegistrarAbastecimientoViewModel
     public int InventarioId { get; set; }
     [Range(1, 1000000)]
     public int Cantidad { get; set; }
-    [Range(typeof(decimal), "0", "9999999999999.99")]
+    [Range(typeof(decimal), "0", "9999999999999.99", ParseLimitsInInvariantCulture = true)]
     public decimal CostoUnitario { get; set; }
     [Required, DataType(DataType.Date)]
     public DateTime? FechaRecepcion { get; set; } = DateTime.Today;
