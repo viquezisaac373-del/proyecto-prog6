@@ -32,6 +32,15 @@
                         </a>
                     </li>
                 }
+                @if (User.IsInRole("Administrador") || User.IsInRole("Medico") ||
+                     User.IsInRole("Médico") || User.IsInRole("Secretaria"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="DisponibilidadMedica" asp-action="Index">
+                            Horarios médicos
+                        </a>
+                    </li>
+                }
                 @if (User.IsInRole("Cliente"))
                 {
                     <li class="nav-item">
