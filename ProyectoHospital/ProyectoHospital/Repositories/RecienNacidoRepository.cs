@@ -398,17 +398,46 @@ namespace ProyectoHospital.Repositories
         {
             return EjecutarConAuditoriaAsync(usuarioId, async conexion =>
             {
-                await using var comando =
-                    new SqlCommand("dbo.usp_AsignarIdentificacionRecienNacido", conexion);
-                comando.CommandType = CommandType.StoredProcedure;
+                // El SP y el aviso interno deben confirmarse juntos.
+                await using var transaccion =
+                    (SqlTransaction)await conexion.BeginTransactionAsync();
+                try
+                {
+                    await using var comando = new SqlCommand(
+                        "dbo.usp_AsignarIdentificacionRecienNacido",
+                        conexion, transaccion);
+                    comando.CommandType = CommandType.StoredProcedure;
+                    comando.Parameters.Add("@PacienteId", SqlDbType.Int).Value =
+                        modelo.PacienteId;
+                    comando.Parameters.Add("@NumeroIdentificacion", SqlDbType.NVarChar, 25).Value =
+                        modelo.NumeroIdentificacion.Trim();
+                    await comando.ExecuteNonQueryAsync();
 
-                comando.Parameters.Add("@PacienteId", SqlDbType.Int).Value =
-                    modelo.PacienteId;
-                comando.Parameters.Add("@NumeroIdentificacion", SqlDbType.NVarChar, 25).Value =
-                    modelo.NumeroIdentificacion.Trim();
+                    const string sqlAviso = @"
+                        INSERT INTO dbo.BitacoraNotificaciones
+                            (PacienteId, CitaId, Mensaje, EstadoEnvio)
+                        VALUES (
+                            @PacienteId, NULL,
+                            N'RN | Identificación oficial asignada al expediente. ' +
+                            N'Aviso interno; no se ha enviado correo ni SMS.',
+                            N'Pendiente'
+                        );";
+                    await using var aviso = new SqlCommand(sqlAviso, conexion, transaccion);
+                    aviso.Parameters.Add("@PacienteId", SqlDbType.Int).Value =
+                        modelo.PacienteId;
+                    await aviso.ExecuteNonQueryAsync();
 
-                await comando.ExecuteNonQueryAsync();
-                return true;
+                    await transaccion.CommitAsync();
+                    return true;
+                }
+                catch
+                {
+                    try { await transaccion.RollbackAsync(); }
+                    catch (Exception ex) {
+                        _logger.LogError(ex, "Error al revertir identificación de RN.");
+                    }
+                    throw;
+                }
             });
         }
 
@@ -482,6 +511,22 @@ namespace ProyectoHospital.Repositories
                     comando.Parameters.Add("@Referencia", SqlDbType.NVarChar, 200).Value =
                         modelo.ReferenciaLaboratorio.Trim();
                     await comando.ExecuteNonQueryAsync();
+
+                    const string sqlAviso = @"
+                        INSERT INTO dbo.BitacoraNotificaciones
+                            (PacienteId, CitaId, Mensaje, EstadoEnvio)
+                        VALUES (
+                            @PacienteId, NULL,
+                            N'RN | Tipificación sanguínea confirmada. ' +
+                            N'La evidencia clínica consta en la bitácora de acciones. ' +
+                            N'Aviso interno; no se ha enviado correo ni SMS.',
+                            N'Pendiente'
+                        );";
+                    await using var aviso = new SqlCommand(sqlAviso, conexion, transaccion);
+                    aviso.Parameters.Add("@PacienteId", SqlDbType.Int).Value =
+                        modelo.PacienteId;
+                    await aviso.ExecuteNonQueryAsync();
+
                     await transaccion.CommitAsync();
                     return true;
                 }
