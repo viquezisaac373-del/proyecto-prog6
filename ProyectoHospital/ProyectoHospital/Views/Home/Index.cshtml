@@ -3,7 +3,60 @@
 }
 
 <div class="container my-4 mb-5">
-    @* Inicio informativo: no es el listado de módulos operativos. *@
+    @if (User.IsInRole("Cliente"))
+    {
+        <section class="p-4 p-md-5 rounded border bg-white mb-4">
+            <div class="row align-items-center g-4">
+                <div class="col-md-8">
+                    <p class="text-uppercase small fw-semibold text-muted mb-2">
+                        Portal de clientes
+                    </p>
+                    <h1 class="mb-3">Bienvenido a Hospinomenal</h1>
+                    <p class="lead">Tu espacio de consulta</p>
+                    <p>
+                        Consultá los datos de tu cuenta y explorá los productos publicados
+                        en el catálogo del hospital.
+                    </p>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a asp-controller="CuentaCliente" asp-action="MiCuenta"
+                           class="btn btn-primary">Mi cuenta</a>
+                        <a asp-controller="CuentaCliente" asp-action="Catalogo"
+                           class="btn btn-outline-primary">Ver catálogo</a>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <img src="~/images/logo.jpeg" class="hospital-logo"
+                         alt="Símbolo de Hospinomenal" />
+                </div>
+            </div>
+        </section>
+        <section aria-labelledby="serviciosCliente" class="mb-4">
+            <h2 id="serviciosCliente" class="h4 mb-3">Opciones disponibles para clientes</h2>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="h-100 border rounded bg-white p-3">
+                        <h3 class="h5">Mis datos</h3>
+                        <p>Revisá tu nombre, identificación y cuenta de acceso.</p>
+                        <a asp-controller="CuentaCliente" asp-action="MiCuenta">Consultar mi cuenta</a>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="h-100 border rounded bg-white p-3">
+                        <h3 class="h5">Productos</h3>
+                        <p>Consultá artículos activos y vendibles, con precios de referencia.</p>
+                        <a asp-controller="CuentaCliente" asp-action="Catalogo">Explorar catálogo</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <div class="alert alert-info" role="note">
+            Las compras, los pagos, las facturas electrónicas y la solicitud de citas en línea
+            todavía no están disponibles en este portal.
+        </div>
+    }
+    else
+    {
+    @* Inicio informativo para personal: no es el listado de módulos operativos. *@
     <section class="p-4 p-md-5 rounded border bg-white mb-4">
         <div class="row align-items-center g-4">
             <div class="col-md-8">
@@ -109,4 +162,5 @@
             en una etapa posterior. No se han configurado destinatarios.
         </p>
     </section>
+    }
 </div>
