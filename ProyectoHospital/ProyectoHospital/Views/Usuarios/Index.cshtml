@@ -1,6 +1,9 @@
 @model UsuariosIndexViewModel
 @{
     ViewData["Title"] = "Administración de usuarios";
+    // La identidad se obtiene de la sesión autenticada, no del formulario.
+    int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
+                 out int usuarioActualId);
 }
 <div class="container my-4">
     <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center mb-3">
@@ -60,13 +63,20 @@
                         }
                     </td>
                     <td class="text-end">
-                        <form asp-action="CambiarEstado" method="post" asp-antiforgery="true">
-                            <input type="hidden" name="usuarioId" value="@usuario.UsuarioId" />
-                            <input type="hidden" name="activar" value="@(usuario.Activo ? "false" : "true")" />
-                            <button type="submit" class="btn btn-sm @(usuario.Activo ? "btn-outline-danger" : "btn-outline-success")">
-                                @(usuario.Activo ? "Desactivar" : "Activar")
-                            </button>
-                        </form>
+                        @if (usuario.UsuarioId == usuarioActualId)
+                        {
+                            <span class="text-muted small">Cuenta actual</span>
+                        }
+                        else
+                        {
+                            <form asp-action="CambiarEstado" method="post" asp-antiforgery="true">
+                                <input type="hidden" name="usuarioId" value="@usuario.UsuarioId" />
+                                <input type="hidden" name="activar" value="@(usuario.Activo ? "false" : "true")" />
+                                <button type="submit" class="btn btn-sm @(usuario.Activo ? "btn-outline-danger" : "btn-outline-success")">
+                                    @(usuario.Activo ? "Desactivar" : "Activar")
+                                </button>
+                            </form>
+                        }
                     </td>
                 </tr>
             }
