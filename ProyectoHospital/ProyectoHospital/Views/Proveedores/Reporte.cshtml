@@ -1,0 +1,83 @@
+@model List<ProveedorResumen>
+@{
+    ViewData["Title"] = "Reporte de proveedores";
+    var filtro = (string?)ViewData["EstadoFiltro"] ?? "todos";
+}
+<style>
+@@media print {
+    nav, footer, .no-imprimir { display: none !important; }
+    body { background: white !important; }
+}
+</style>
+<div class="container my-4 mb-5">
+    <header class="mb-4">
+        <h1 class="h3">Reporte de proveedores hospitalarios</h1>
+        <p class="text-muted">
+            Estado de actividad, categorías y productos asociados.
+            No contiene disponibilidad de inventario ni datos de pacientes.
+        </p>
+    </header>
+    <form asp-action="Reporte" method="get" class="row g-2 align-items-end no-imprimir mb-3">
+        <div class="col-md-4">
+            <label for="estado" class="form-label">Estado</label>
+            <select id="estado" name="estado" class="form-select">
+                <option value="todos" selected="@(filtro == "todos")">Todos</option>
+                <option value="activos" selected="@(filtro == "activos")">Activos</option>
+                <option value="inactivos" selected="@(filtro == "inactivos")">Inactivos</option>
+            </select>
+        </div>
+        <div class="col-md-8">
+            <button type="submit" class="btn btn-outline-primary">Consultar</button>
+            <button type="button" class="btn btn-primary" onclick="window.print()">Imprimir</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Volver</a>
+        </div>
+    </form>
+    <div class="row g-3 mb-3">
+        <div class="col-sm-4">
+            <div class="p-3 bg-white rounded border">
+                <span class="small text-muted">Activos (total)</span>
+                <strong class="h4 d-block mb-0">@ViewData["TotalActivos"]</strong>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="p-3 bg-white rounded border">
+                <span class="small text-muted">Inactivos (total)</span>
+                <strong class="h4 d-block mb-0">@ViewData["TotalInactivos"]</strong>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="p-3 bg-white rounded border">
+                <span class="small text-muted">Registros mostrados</span>
+                <strong class="h4 d-block mb-0">@Model.Count</strong>
+            </div>
+        </div>
+    </div>
+    <div class="table-responsive bg-white border rounded">
+        <table class="table table-striped mb-0">
+            <thead><tr>
+                <th>ID</th><th>Proveedor</th><th>Identificación</th>
+                <th>Tipo</th><th>Teléfono</th><th>Correo</th>
+                <th>Productos</th><th>Entregas</th><th>Estado</th>
+            </tr></thead>
+            <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td>@p.ProveedorId</td><td>@p.RazonSocial</td>
+                    <td>@p.Identificacion</td><td>@p.Categoria</td>
+                    <td>@p.Telefono</td><td>@p.Correo</td>
+                    <td>@p.ProductosAsociados</td><td>@p.EntregasRegistradas</td>
+                    <td>@(p.Activo ? "Activo" : "Inactivo")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        @if (Model.Count == 0)
+        {
+            <p class="p-3 text-muted mb-0">No hay proveedores que coincidan con el filtro.</p>
+        }
+    </div>
+    <p class="text-muted small mt-3">
+        Informe interno generado desde Hospinomenal. Los estados corresponden al momento de la consulta.
+    </p>
+</div>

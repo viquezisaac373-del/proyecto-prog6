@@ -1,68 +1,96 @@
-@model HomeViewModel
-
 @{
     ViewData["Title"] = "Panel de módulos";
+    bool esAdmin = User.IsInRole("Administrador");
+    bool esMedico = User.IsInRole("Medico") || User.IsInRole("Médico");
 }
-
 <div class="container my-4 mb-5">
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
         <div>
             <h1 class="h2">Panel de módulos</h1>
             <p class="text-muted">
-                Seleccione la sección con la que desea trabajar.
-                Algunas funcionalidades siguen en desarrollo.
+                Seleccione uno de los módulos disponibles para su perfil.
             </p>
         </div>
         <a asp-controller="Home" asp-action="Index"
-           class="btn btn-outline-secondary">
-            Volver al inicio
-        </a>
+           class="btn btn-outline-secondary">Volver al inicio</a>
     </div>
 
     <div class="row g-3">
-        @foreach (ServicioHospitalario servicio in Model.Servicios)
+        @if (esAdmin)
         {
-            <div class="col-md-4" id="servicio-@servicio.Id">
+            <div class="col-md-4">
                 <div class="border rounded bg-white p-4 h-100 d-flex flex-column">
-                    <h2 class="h5">@servicio.Nombre</h2>
-                    <p>@servicio.Descripcion</p>
-                    <div class="mt-auto">
-                        @switch (servicio.TipoServicio)
-                        {
-                            case TipoServicioHospitalario.Pacientes:
-                                @if (User.IsInRole("Administrador"))
-                                {
-                                    <a asp-controller="Pacientes"
-                                       asp-action="Index"
-                                       class="btn btn-primary">
-                                        Gestionar pacientes
-                                    </a>
-                                }
-                                else
-                                {
-                                    <span class="text-muted small">
-                                        Acceso restringido por rol
-                                    </span>
-                                }
-                                break;
-                            case TipoServicioHospitalario.Citas:
-                                <a asp-controller="Citas"
-                                   asp-action="Index"
-                                   class="btn btn-outline-primary">
-                                    Ver sección de citas
-                                </a>
-                                break;
-                            case TipoServicioHospitalario.Medicamentos:
-                                <a asp-controller="Medicamentos"
-                                   asp-action="Index"
-                                   class="btn btn-outline-primary">
-                                    Ver sección de medicamentos
-                                </a>
-                                break;
-                        }
-                    </div>
+                    <h2 class="h5">Pacientes</h2>
+                    <p>Consultar, registrar, editar y desactivar expedientes de pacientes.</p>
+                    <a asp-controller="Pacientes" asp-action="Index"
+                       class="btn btn-primary mt-auto">Gestionar pacientes</a>
+                </div>
+            </div>
+        }
+
+        <div class="col-md-4">
+            <div class="border rounded bg-white p-4 h-100 d-flex flex-column">
+                <h2 class="h5">Recién nacidos</h2>
+                <p>Registrar y consultar nacimientos, con seguimiento de identificación y tipificación.</p>
+                <a asp-controller="RecienNacidos" asp-action="Index"
+                   class="btn btn-primary mt-auto">Ver recién nacidos</a>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="border rounded bg-white p-4 h-100 d-flex flex-column">
+                <h2 class="h5">Horarios médicos</h2>
+                <p>Consultar disponibilidad semanal, médicos, especialidades y capacidad teórica.</p>
+                <a asp-controller="DisponibilidadMedica" asp-action="Index"
+                   class="btn btn-primary mt-auto">Ver horarios</a>
+            </div>
+        </div>
+
+        @if (esMedico)
+        {
+            <div class="col-md-4">
+                <div class="border rounded bg-white p-4 h-100 d-flex flex-column">
+                    <h2 class="h5">Recomendaciones de reposo</h2>
+                    <p>Registrar recomendaciones internas y consultar comprobantes propios.
+                       No son incapacidades oficiales de la CCSS ni del INS.</p>
+                    <a asp-controller="RecomendacionesReposo" asp-action="Index"
+                       class="btn btn-primary mt-auto">Ver recomendaciones</a>
+                </div>
+            </div>
+        }
+
+        @if (esAdmin)
+        {
+            <div class="col-md-4">
+                <div class="border rounded bg-white p-4 h-100 d-flex flex-column">
+                    <h2 class="h5">Usuarios y personal</h2>
+                    <p>Gestionar cuentas, empleados, médicos y roles de acceso.</p>
+                    <a asp-controller="Usuarios" asp-action="Index"
+                       class="btn btn-primary mt-auto">Gestionar usuarios</a>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="border rounded bg-white p-4 h-100 d-flex flex-column">
+                    <h2 class="h5">Proveedores</h2>
+                    <p>Consultar proveedores, productos suministrados, entregas y reportes.</p>
+                    <a asp-controller="Proveedores" asp-action="Index"
+                       class="btn btn-primary mt-auto">Gestionar proveedores</a>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="border rounded bg-white p-4 h-100 d-flex flex-column">
+                    <h2 class="h5">Bitácoras</h2>
+                    <p>Revisar accesos, acciones, errores y notificaciones registradas.</p>
+                    <a asp-controller="Bitacoras" asp-action="Index"
+                       class="btn btn-primary mt-auto">Consultar bitácoras</a>
                 </div>
             </div>
         }
     </div>
+    <p class="text-muted small mt-4">
+        Las secciones de citas y medicamentos no se ofrecen todavía porque sus
+        mantenimientos permanecen pendientes de integración.
+    </p>
 </div>

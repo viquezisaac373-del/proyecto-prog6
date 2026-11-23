@@ -1,0 +1,300 @@
+@model ProveedoresIndexViewModel
+@{
+    ViewData["Title"] = "Proveedores y abastecimientos";
+}
+<div class="container my-4 mb-5">
+    <header class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+        <div>
+            <h1 class="h3">Proveedores hospitalarios</h1>
+            <p class="text-muted mb-0">
+                Registro, productos suministrados y trazabilidad de abastecimientos.
+            </p>
+        </div>
+        <a asp-action="Reporte" class="btn btn-outline-primary">Reporte de proveedores</a>
+    </header>
+
+    @if (TempData["Exito"] is string exito)
+    {
+        <div class="alert alert-success" role="status">@exito</div>
+    }
+    @if (TempData["Error"] is string error)
+    {
+        <div class="alert alert-danger" role="alert">@error</div>
+    }
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4"><div class="border rounded bg-white p-3">
+            <div class="text-muted small">Proveedores activos</div>
+            <strong class="h4">@Model.TotalActivos</strong>
+        </div></div>
+        <div class="col-md-4"><div class="border rounded bg-white p-3">
+            <div class="text-muted small">Proveedores inactivos</div>
+            <strong class="h4">@Model.TotalInactivos</strong>
+        </div></div>
+        <div class="col-md-4"><div class="border rounded bg-white p-3">
+            <div class="text-muted small">Abastecimientos visibles</div>
+            <strong class="h4">@Model.Abastecimientos.Count</strong>
+        </div></div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header"><h2 class="h5 mb-0">1. Registrar proveedor</h2></div>
+        <div class="card-body">
+            <form asp-action="CrearProveedor" method="post" asp-antiforgery="true">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="NuevoProveedor.RazonSocial" class="form-label"></label>
+                        <input asp-for="NuevoProveedor.RazonSocial" class="form-control" required />
+                        <span asp-validation-for="NuevoProveedor.RazonSocial" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="NuevoProveedor.Identificacion" class="form-label"></label>
+                        <input asp-for="NuevoProveedor.Identificacion" class="form-control" required />
+                        <span asp-validation-for="NuevoProveedor.Identificacion" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="NuevoProveedor.Categoria" class="form-label">Tipo de suministro</label>
+                        <select asp-for="NuevoProveedor.Categoria" class="form-select">
+                            <option value="Medicamentos">Medicamentos</option>
+                            <option value="Equipos">Equipos</option>
+                            <option value="Instrumentos">Instrumentos</option>
+                            <option value="Mixto">Mixto</option>
+                        </select>
+                        <span asp-validation-for="NuevoProveedor.Categoria" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="NuevoProveedor.Telefono" class="form-label"></label>
+                        <input asp-for="NuevoProveedor.Telefono" class="form-control" required />
+                        <span asp-validation-for="NuevoProveedor.Telefono" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="NuevoProveedor.Correo" class="form-label"></label>
+                        <input asp-for="NuevoProveedor.Correo" type="email" class="form-control" />
+                        <span asp-validation-for="NuevoProveedor.Correo" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-5">
+                        <label asp-for="NuevoProveedor.Direccion" class="form-label"></label>
+                        <input asp-for="NuevoProveedor.Direccion" class="form-control" required />
+                        <span asp-validation-for="NuevoProveedor.Direccion" class="text-danger"></span>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Registrar proveedor</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header"><h2 class="h5 mb-0">2. Productos del inventario</h2></div>
+        <div class="card-body">
+            <p class="text-muted small">
+                Si el producto todavía no existe, registralo aquí como artículo interno no vendible.
+                Si ya está en Inventario, utilizá el selector de asociación.
+            </p>
+            <form asp-action="CrearProducto" method="post" asp-antiforgery="true">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="NuevoProducto.Nombre" class="form-label"></label>
+                        <input asp-for="NuevoProducto.Nombre" class="form-control" required />
+                        <span asp-validation-for="NuevoProducto.Nombre" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="NuevoProducto.Codigo" class="form-label"></label>
+                        <input asp-for="NuevoProducto.Codigo" class="form-control" required />
+                        <span asp-validation-for="NuevoProducto.Codigo" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-2">
+                        <label asp-for="NuevoProducto.Categoria" class="form-label"></label>
+                        <select asp-for="NuevoProducto.Categoria" class="form-select">
+                            <option value="Medicamentos">Medicamentos</option>
+                            <option value="Equipos">Equipos</option>
+                            <option value="Instrumentos">Instrumentos</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="NuevoProducto.Descripcion" class="form-label"></label>
+                        <input asp-for="NuevoProducto.Descripcion" class="form-control" />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-outline-primary mt-3">Crear producto interno</button>
+            </form>
+            <hr />
+            <h3 class="h6">Asociar producto a proveedor</h3>
+            <form asp-action="VincularProducto" method="post" asp-antiforgery="true" class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label asp-for="NuevoVinculo.ProveedorId" class="form-label">Proveedor activo</label>
+                    <select asp-for="NuevoVinculo.ProveedorId" class="form-select" required>
+                        <option value="0">Seleccionar proveedor...</option>
+                        @foreach (var p in Model.Proveedores.Where(x => x.Activo))
+                        {
+                            <option value="@p.ProveedorId">@p.RazonSocial (#@p.ProveedorId)</option>
+                        }
+                    </select>
+                    <span asp-validation-for="NuevoVinculo.ProveedorId" class="text-danger"></span>
+                </div>
+                <div class="col-md-5">
+                    <label asp-for="NuevoVinculo.InventarioId" class="form-label">Producto existente</label>
+                    <select asp-for="NuevoVinculo.InventarioId" class="form-select" required>
+                        <option value="0">Seleccionar producto...</option>
+                        @foreach (var producto in Model.Productos)
+                        {
+                            <option value="@producto.InventarioId">@producto.Nombre (@producto.Codigo)</option>
+                        }
+                    </select>
+                    <span asp-validation-for="NuevoVinculo.InventarioId" class="text-danger"></span>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-outline-primary">Asociar</button>
+                </div>
+            </form>
+            <div class="table-responsive mt-3">
+                <table class="table table-sm">
+                    <thead><tr><th>Proveedor</th><th>Producto suministrado</th><th>Código</th></tr></thead>
+                    <tbody>
+                        @foreach (var item in Model.Vinculos)
+                        {
+                            <tr><td>@item.Proveedor</td><td>@item.Producto</td><td>@item.Codigo</td></tr>
+                        }
+                    </tbody>
+                </table>
+                @if (Model.Vinculos.Count == 0)
+                {
+                    <p class="small text-muted">No hay productos asociados todavía.</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header"><h2 class="h5 mb-0">3. Registrar abastecimiento recibido</h2></div>
+        <div class="card-body">
+            <p class="small text-muted">
+                Seleccioná un proveedor activo y un producto previamente asociado.
+                La entrega se registra también como EntradaCompra en movimientos de inventario.
+            </p>
+            <form asp-action="RegistrarAbastecimiento" method="post" asp-antiforgery="true">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="NuevoAbastecimiento.ProveedorId" class="form-label">Proveedor</label>
+                        <select asp-for="NuevoAbastecimiento.ProveedorId" class="form-select" required>
+                            <option value="0">Seleccionar proveedor...</option>
+                            @foreach (var p in Model.Proveedores.Where(x => x.Activo))
+                            {
+                                <option value="@p.ProveedorId">@p.RazonSocial</option>
+                            }
+                        </select>
+                        <span asp-validation-for="NuevoAbastecimiento.ProveedorId" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="NuevoAbastecimiento.InventarioId" class="form-label">Producto asociado</label>
+                        <select asp-for="NuevoAbastecimiento.InventarioId" class="form-select" required>
+                            <option value="0">Seleccionar producto...</option>
+                            @foreach (var producto in Model.Productos)
+                            {
+                                <option value="@producto.InventarioId">@producto.Nombre (@producto.Codigo)</option>
+                            }
+                        </select>
+                        <span asp-validation-for="NuevoAbastecimiento.InventarioId" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="NuevoAbastecimiento.Referencia" class="form-label"></label>
+                        <input asp-for="NuevoAbastecimiento.Referencia" class="form-control"
+                               placeholder="Ej. ENTREGA-PRUEBA-001" required />
+                        <span asp-validation-for="NuevoAbastecimiento.Referencia" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="NuevoAbastecimiento.FechaRecepcion" class="form-label"></label>
+                        <input asp-for="NuevoAbastecimiento.FechaRecepcion" type="date"
+                               class="form-control" required />
+                        <span asp-validation-for="NuevoAbastecimiento.FechaRecepcion" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="NuevoAbastecimiento.Cantidad" class="form-label">Cantidad recibida</label>
+                        <input asp-for="NuevoAbastecimiento.Cantidad" type="number" min="1"
+                               class="form-control" required />
+                        <span asp-validation-for="NuevoAbastecimiento.Cantidad" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="NuevoAbastecimiento.CostoUnitario" class="form-label"></label>
+                        <input asp-for="NuevoAbastecimiento.CostoUnitario" type="number" min="0"
+                               step="0.01" class="form-control" required />
+                        <span asp-validation-for="NuevoAbastecimiento.CostoUnitario" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="NuevoAbastecimiento.Observacion" class="form-label"></label>
+                        <input asp-for="NuevoAbastecimiento.Observacion" class="form-control" />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Registrar recepción</button>
+            </form>
+        </div>
+    </div>
+
+    <h2 class="h5">Estado de los proveedores</h2>
+    <div class="table-responsive bg-white border rounded mb-4">
+        <table class="table table-striped mb-0 align-middle">
+            <thead><tr>
+                <th>Proveedor</th><th>Contacto</th><th>Tipo</th><th>Productos</th>
+                <th>Entregas</th><th>Estado</th><th class="text-end">Acción</th>
+            </tr></thead>
+            <tbody>
+            @foreach (var p in Model.Proveedores)
+            {
+                <tr>
+                    <td><strong>@p.RazonSocial</strong><div class="small text-muted">@p.Identificacion</div></td>
+                    <td>@p.Telefono<div class="small text-muted">@p.Correo</div></td>
+                    <td>@p.Categoria</td>
+                    <td>@p.ProductosAsociados</td>
+                    <td>@p.EntregasRegistradas</td>
+                    <td>@(p.Activo ? "Activo" : "Inactivo")</td>
+                    <td class="text-end">
+                        <form asp-action="CambiarEstado" method="post" asp-antiforgery="true">
+                            <input type="hidden" name="proveedorId" value="@p.ProveedorId" />
+                            <input type="hidden" name="activar" value="@(p.Activo ? "false" : "true")" />
+                            <button class="btn btn-sm @(p.Activo ? "btn-outline-danger" : "btn-outline-success")"
+                                    type="submit">@(p.Activo ? "Desactivar" : "Activar")</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        @if (Model.Proveedores.Count == 0)
+        {
+            <p class="p-3 text-muted mb-0">No hay proveedores registrados.</p>
+        }
+    </div>
+
+    <h2 class="h5">Historial de abastecimientos</h2>
+    <div class="table-responsive bg-white border rounded">
+        <table class="table table-striped mb-0">
+            <thead><tr>
+                <th>Entrega</th><th>Fecha</th><th>Proveedor</th><th>Producto</th>
+                <th>Cantidad</th><th>Costo unitario</th><th>Total de referencia</th>
+            </tr></thead>
+            <tbody>
+            @foreach (var a in Model.Abastecimientos)
+            {
+                <tr>
+                    <td>#@a.AbastecimientoId<div class="small text-muted">@a.Referencia</div></td>
+                    <td>@a.FechaRecepcion.ToString("dd/MM/yyyy")</td>
+                    <td>@a.Proveedor</td><td>@a.Producto</td>
+                    <td>@a.Cantidad</td><td>@a.CostoUnitario.ToString("N2")</td>
+                    <td>@a.Total.ToString("N2")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        @if (Model.Abastecimientos.Count == 0)
+        {
+            <p class="p-3 text-muted mb-0">No hay abastecimientos registrados.</p>
+        }
+    </div>
+    <p class="text-muted small mt-2">
+        Historial: últimas 200 entregas. Los productos nuevos se crean como internos no vendibles.
+        No se calcula disponibilidad física de existencias desde esta pantalla.
+    </p>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
