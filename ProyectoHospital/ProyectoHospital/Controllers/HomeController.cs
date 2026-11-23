@@ -20,6 +20,12 @@ namespace ProyectoHospital.Controllers
             return View();
         }
 
+        [HttpGet]
+        public IActionResult Informacion()
+        {
+            return View();
+        }
+
         public IActionResult Privacy()
         {
             return View();

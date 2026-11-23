@@ -1,0 +1,21 @@
+@model ClienteCuentaResumen
+@{
+    ViewData["Title"] = "Mi cuenta de cliente";
+}
+<div class="container my-4">
+    <h1 class="h3">Mi cuenta de cliente</h1>
+    <div class="card mt-3 mb-3">
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-3">Usuario</dt><dd class="col-sm-9">@Model.Usuario</dd>
+                <dt class="col-sm-3">Cliente</dt><dd class="col-sm-9">@Model.Nombre @Model.Apellidos</dd>
+                <dt class="col-sm-3">Identificación</dt><dd class="col-sm-9">@Model.Identificacion</dd>
+            </dl>
+        </div>
+    </div>
+    <a asp-action="Catalogo" class="btn btn-primary">Consultar catálogo de productos</a>
+    <div class="alert alert-info mt-3">
+        La gestión de compras, pagos y facturas todavía requiere integración con el módulo de ventas.
+        Este portal no permite confirmar compras ni emitir comprobantes electrónicos.
+    </div>
+</div>

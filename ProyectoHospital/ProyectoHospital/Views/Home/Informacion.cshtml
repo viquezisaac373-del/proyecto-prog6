@@ -1,0 +1,84 @@
+@{
+    ViewData["Title"] = "Información";
+}
+
+<div class="container my-4 mb-5">
+    <header class="mb-4">
+        <p class="text-uppercase small fw-semibold text-muted mb-2">Hospinomenal</p>
+        <h1 class="h3">Información del sistema</h1>
+        <p class="text-muted">
+            Conocé las funciones disponibles para tu perfil y las limitaciones
+            actuales del portal.
+        </p>
+    </header>
+
+    @if (User.IsInRole("Cliente"))
+    {
+        <div class="row g-3">
+            <section class="col-md-6" aria-labelledby="informacionCuenta">
+                <div class="h-100 border rounded bg-white p-4">
+                    <h2 id="informacionCuenta" class="h5">Mi cuenta</h2>
+                    <p>
+                        Podés consultar la información asociada a tu registro de cliente.
+                        La cuenta no concede acceso automático a expedientes médicos.
+                    </p>
+                    <a asp-controller="CuentaCliente" asp-action="MiCuenta"
+                       class="btn btn-outline-primary">Ir a mi cuenta</a>
+                </div>
+            </section>
+            <section class="col-md-6" aria-labelledby="informacionCatalogo">
+                <div class="h-100 border rounded bg-white p-4">
+                    <h2 id="informacionCatalogo" class="h5">Catálogo de productos</h2>
+                    <p>
+                        El catálogo lista productos activos y vendibles del inventario,
+                        con precios de referencia. No confirma existencias.
+                    </p>
+                    <a asp-controller="CuentaCliente" asp-action="Catalogo"
+                       class="btn btn-outline-primary">Consultar catálogo</a>
+                </div>
+            </section>
+        </div>
+        <div class="alert alert-info mt-4" role="note">
+            El flujo de pedidos, pagos, facturación electrónica y solicitud
+            de citas desde cuentas de clientes está pendiente de integración.
+        </div>
+    }
+    else
+    {
+        <section class="border rounded bg-white p-4 mb-3">
+            <h2 class="h5">Acceso del personal</h2>
+            <p>
+                Las funciones administrativas y clínicas se habilitan según
+                los roles de la sesión. No todos los usuarios tienen los mismos permisos.
+            </p>
+            <a asp-controller="Modulos" asp-action="Index"
+               class="btn btn-outline-primary">Ver módulos disponibles</a>
+        </section>
+        @if (User.IsInRole("Administrador"))
+        {
+            <section class="border rounded bg-white p-4">
+                <h2 class="h5">Administración de usuarios</h2>
+                <p>
+                    La administración permite gestionar cuentas de personal y vincular
+                    cuentas a registros de clientes existentes.
+                </p>
+                <a asp-controller="Usuarios" asp-action="Index"
+                   class="btn btn-outline-primary">Administrar usuarios</a>
+            </section>
+        }
+    }
+
+    <section class="border-top pt-4 mt-4" aria-labelledby="soporteInfo">
+        <h2 id="soporteInfo" class="h5">Información y soporte</h2>
+        <p class="mb-1">
+            Si necesitás asistencia con tu cuenta, contactá al responsable
+            designado por el hospital.
+        </p>
+        <p class="text-muted small">
+            No hay un canal de soporte electrónico configurado dentro del sistema.
+        </p>
+    </section>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+        Volver a Inicio
+    </a>
+</div>

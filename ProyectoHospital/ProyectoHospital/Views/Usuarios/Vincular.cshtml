@@ -1,0 +1,68 @@
+@model VincularUsuarioViewModel
+@{
+    ViewData["Title"] = "Crear cuenta para empleado existente";
+}
+<div class="container my-4">
+    <h2>Vincular empleado existente</h2>
+    <p class="text-muted">Permite crear las credenciales de un empleado que fue registrado previamente, sin duplicar su ficha.</p>
+
+    @if (Model.Empleados.Count == 0)
+    {
+        <div class="alert alert-info">No hay empleados activos pendientes de vincular a una cuenta.</div>
+        <a asp-action="Index" class="btn btn-outline-secondary">Regresar</a>
+    }
+    else
+    {
+        <form asp-action="Vincular" method="post" asp-antiforgery="true" class="card shadow-sm">
+            <div class="card-body">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-12">
+                        <label asp-for="EmpleadoId" class="form-label"></label>
+                        <select asp-for="EmpleadoId" class="form-select">
+                            <option value="0">Seleccione un empleado...</option>
+                            @foreach (var empleado in Model.Empleados)
+                            {
+                                <option value="@empleado.EmpleadoId">#@empleado.EmpleadoId — @empleado.NombreCompleto (@empleado.Puesto)</option>
+                            }
+                        </select>
+                        <span asp-validation-for="EmpleadoId" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="NombreUsuario" class="form-label"></label>
+                        <input asp-for="NombreUsuario" class="form-control" maxlength="50" autocomplete="off" />
+                        <span asp-validation-for="NombreUsuario" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="RolId" class="form-label">Rol de acceso</label>
+                        <select asp-for="RolId" class="form-select">
+                            <option value="0">Seleccione un rol...</option>
+                            @foreach (var rol in Model.Roles)
+                            {
+                                <option value="@rol.RolId">@rol.Nombre</option>
+                            }
+                        </select>
+                        <span asp-validation-for="RolId" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Clave" class="form-label">Contraseña (mínimo 12 caracteres)</label>
+                        <input asp-for="Clave" type="password" class="form-control" autocomplete="new-password" minlength="12" />
+                        <span asp-validation-for="Clave" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ConfirmacionClave" class="form-label">Confirmar contraseña</label>
+                        <input asp-for="ConfirmacionClave" type="password" class="form-control" autocomplete="new-password" />
+                        <span asp-validation-for="ConfirmacionClave" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Crear y vincular cuenta</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                </div>
+            </div>
+        </form>
+    }
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

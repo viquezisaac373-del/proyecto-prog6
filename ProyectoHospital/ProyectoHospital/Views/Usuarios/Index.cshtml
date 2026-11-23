@@ -1,0 +1,90 @@
+@model UsuariosIndexViewModel
+@{
+    ViewData["Title"] = "Administración de usuarios";
+    // La identidad se obtiene de la sesión autenticada, no del formulario.
+    int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
+                 out int usuarioActualId);
+}
+<div class="container my-4">
+    <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center mb-3">
+        <div>
+            <h2>Administración de usuarios</h2>
+            <p class="text-muted mb-0">Cuentas de acceso, empleados y roles del hospital.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-controller="ClientesUsuarios" asp-action="Vincular" class="btn btn-outline-primary">Vincular cliente existente</a>
+            <a asp-action="Vincular" class="btn btn-outline-primary">Vincular empleado existente (@Model.CantidadSinCuenta)</a>
+            <a asp-action="Crear" class="btn btn-primary">Nuevo empleado y usuario</a>
+        </div>
+    </div>
+
+    @if (TempData["Exito"] is string exito)
+    {
+        <div class="alert alert-success" role="status">@exito</div>
+    }
+    @if (TempData["Error"] is string error)
+    {
+        <div class="alert alert-danger" role="alert">@error</div>
+    }
+
+    <div class="alert alert-info">
+        Los empleados sin cuenta no pueden iniciar sesión. La cuenta <strong>admin</strong> puede mantenerse
+        sin empleado vinculado; no es necesario modificarla.
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Empleado</th>
+                    <th>Puesto</th>
+                    <th>Roles</th>
+                    <th>Estado</th>
+                    <th class="text-end">Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var usuario in Model.Usuarios)
+            {
+                <tr>
+                    <td><strong>@usuario.Usuario</strong> <small class="text-muted">(#@usuario.UsuarioId)</small></td>
+                    <td>@(usuario.Empleado ?? usuario.Cliente ?? "Sin vincular")</td>
+                    <td>@(usuario.Puesto ?? (usuario.Cliente is not null ? "Cliente" : "—"))</td>
+                    <td>@(string.IsNullOrWhiteSpace(usuario.Roles) ? "Sin rol" : usuario.Roles)</td>
+                    <td>
+                        @if (usuario.Activo)
+                        {
+                            <span class="text-success">Activo</span>
+                        }
+                        else
+                        {
+                            <span class="text-secondary">Inactivo</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        @if (usuario.UsuarioId == usuarioActualId)
+                        {
+                            <span class="text-muted small">Cuenta actual</span>
+                        }
+                        else
+                        {
+                            <form asp-action="CambiarEstado" method="post" asp-antiforgery="true">
+                                <input type="hidden" name="usuarioId" value="@usuario.UsuarioId" />
+                                <input type="hidden" name="activar" value="@(usuario.Activo ? "false" : "true")" />
+                                <button type="submit" class="btn btn-sm @(usuario.Activo ? "btn-outline-danger" : "btn-outline-success")">
+                                    @(usuario.Activo ? "Desactivar" : "Activar")
+                                </button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.Usuarios.Count == 0)
+    {
+        <p class="text-muted">No hay cuentas registradas.</p>
+    }
+</div>
