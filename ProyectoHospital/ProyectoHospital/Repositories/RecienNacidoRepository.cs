@@ -303,6 +303,43 @@ namespace ProyectoHospital.Repositories
                     await auditoria.ExecuteNonQueryAsync();
                 }
 
+                // Registrar el alta del nacimiento en la bitácora de AUDITORÍA,
+                // que es la misma consultada por el módulo de Carlos. El trigger
+                // de Pacientes (si está instalado) registra el expediente del bebé.
+                // Si SQL incorpora un trigger de nacimientos en el futuro, evitar
+                // duplicar el evento INSERT de ese mismo nacimiento.
+                const string registrarNacimiento = @"
+                    INSERT INTO dbo.BitacoraAuditoria
+                        (UsuarioId, Accion, Tabla_Modificada, RegistroId,
+                         VAnteriores, VNuevos, Objeto)
+                    SELECT
+                        @UsuarioId, N'INSERT', N'Nacimientos',
+                        CONVERT(NVARCHAR(100), n.NacimientoId),
+                        NULL,
+                        (SELECT n.NacimientoId, n.BebePacienteId, n.MadrePacienteId,
+                                n.EmpleadoId, n.Fecha_Hora_Nacimiento, n.TipoParto
+                         FOR JSON PATH, WITHOUT_ARRAY_WRAPPER),
+                        N'RecienNacidoRepository'
+                    FROM dbo.Nacimientos AS n
+                    WHERE n.NacimientoId = @NacimientoId
+                      AND NOT EXISTS (
+                          SELECT 1 FROM dbo.BitacoraAuditoria AS b
+                          WHERE b.Tabla_Modificada = N'Nacimientos'
+                            AND b.RegistroId =
+                                CONVERT(NVARCHAR(100), n.NacimientoId)
+                            AND b.Accion = N'INSERT'
+                      );";
+
+                await using (var auditoriaNacimiento =
+                    new SqlCommand(registrarNacimiento, conexion, transaccion))
+                {
+                    auditoriaNacimiento.Parameters.Add("@NacimientoId", SqlDbType.Int).Value =
+                        nacimientoId;
+                    auditoriaNacimiento.Parameters.Add("@UsuarioId", SqlDbType.Int).Value =
+                        usuarioId;
+                    await auditoriaNacimiento.ExecuteNonQueryAsync();
+                }
+
                 await transaccion.CommitAsync();
                 return (pacienteId, nacimientoId);
                 }
