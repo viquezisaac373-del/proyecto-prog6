@@ -138,7 +138,7 @@ VALUES (@EmpleadoId, @DiaSemana, @HoraInicio, @HoraFin, 1, @UsuarioId);";
 
             await AuditarAsync(cn, tx, actorId, "INSERT", bloqueId,
                 $"EmpleadoId={form.EmpleadoId}; DiaSemana={form.DiaSemana}; " +
-                $"Inicio={form.HoraInicio:hh\\:mm}; Fin={form.HoraFin:hh\\:mm}");
+                $"Inicio={form.HoraInicio.Value.ToString(@"hh\:mm")}; Fin={form.HoraFin.Value.ToString(@"hh\:mm")}");
             tx.Commit();
             return bloqueId;
         }
@@ -215,7 +215,7 @@ WHERE BloqueId = @BloqueId AND Activo = 1;";
 
             await AuditarAsync(cn, tx, actorId, "UPDATE", bloqueId,
                 $"Se desactivó horario: EmpleadoId={empleadoId}; DiaSemana={dia}; " +
-                $"Inicio={inicio:hh\\:mm}; Fin={fin:hh\\:mm}");
+                $"Inicio={inicio.ToString(@"hh\:mm")}; Fin={fin.ToString(@"hh\:mm")}");
             tx.Commit();
         }
         catch
