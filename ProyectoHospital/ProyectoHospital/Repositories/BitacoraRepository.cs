@@ -110,7 +110,10 @@ namespace ProyectoHospital.Repositories
                 N'Notificación' AS Accion,
                 CAST(NULL AS INT) AS UsuarioId,
                 CAST(NULL AS NVARCHAR(50)) AS Usuario,
-                b.EstadoEnvio AS Resultado,
+                -- Los avisos RN son internos: no implican envio externo.
+                CASE WHEN b.Mensaje LIKE N'RN | %'
+                     THEN N'Interna (sin envío)'
+                     ELSE b.EstadoEnvio END AS Resultado,
                 b.Mensaje AS Descripcion,
                 CAST(NULL AS NVARCHAR(45)) AS Ip,
                 CAST(NULL AS NVARCHAR(MAX)) AS ValoresAnteriores,
@@ -130,7 +133,10 @@ namespace ProyectoHospital.Repositories
             LEFT JOIN dbo.Pacientes p ON p.PacienteId = b.PacienteId
             WHERE" + FiltroFecha + @"
                 AND (@Usuario IS NULL OR CONCAT(p.Nombre, N' ', p.Apellidos) LIKE @Usuario ESCAPE N'\')
-                AND (@Accion IS NULL OR b.EstadoEnvio = @Accion)
+                AND (@Accion IS NULL OR
+                     (CASE WHEN b.Mensaje LIKE N'RN | %'
+                           THEN N'Interna (sin envío)'
+                           ELSE b.EstadoEnvio END) = @Accion)
             ORDER BY {0}
             OFFSET @Saltar ROWS FETCH NEXT @Tamano ROWS ONLY;";
 
@@ -218,7 +224,10 @@ namespace ProyectoHospital.Repositories
                 TipoBitacora.Accesos => "SELECT DISTINCT Accion FROM dbo.vw_BitacoraAccesos ORDER BY Accion;",
                 TipoBitacora.Auditoria => "SELECT DISTINCT Accion FROM dbo.BitacoraAuditoria ORDER BY Accion;",
                 TipoBitacora.Errores => "SELECT DISTINCT Accion FROM dbo.BitacoraErrores ORDER BY Accion;",
-                TipoBitacora.Notificaciones => "SELECT DISTINCT EstadoEnvio FROM dbo.BitacoraNotificaciones ORDER BY EstadoEnvio;",
+                TipoBitacora.Notificaciones => @"SELECT DISTINCT
+                    CASE WHEN Mensaje LIKE N'RN | %' THEN N'Interna (sin envío)'
+                         ELSE EstadoEnvio END AS Estado
+                    FROM dbo.BitacoraNotificaciones ORDER BY Estado;",
                 _ => throw new ArgumentOutOfRangeException(nameof(tipo))
             };
 

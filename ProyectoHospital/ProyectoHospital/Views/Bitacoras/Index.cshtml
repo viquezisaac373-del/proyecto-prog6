@@ -27,6 +27,15 @@
         }
     </ul>
 
+    @if (Model.Tipo == TipoBitacora.Notificaciones)
+    {
+        <p class="small text-muted mt-2 mb-2">
+            Los avisos de recién nacidos identificados como «Interna (sin envío)»
+            son registros dentro del sistema: no implican correo ni SMS.
+            Los avisos históricos no se eliminan cuando se completa el trámite.
+        </p>
+    }
+
     <div class="card shadow-sm bitacoras-card">
         <form method="get" asp-action="Index" class="bitacoras-filtros border-bottom p-3">
             <input type="hidden" name="tipo" value="@Model.Tipo" />
@@ -137,7 +146,7 @@
                                         <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("paciente") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("paciente")'>Paciente <span class="bitacora-flecha">@Model.Flecha("paciente")</span></a></th>
                                         <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("cita") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("cita")'>Cita <span class="bitacora-flecha">@Model.Flecha("cita")</span></a></th>
                                         <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("descripcion") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("descripcion")'>Mensaje <span class="bitacora-flecha">@Model.Flecha("descripcion")</span></a></th>
-                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("resultado") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("resultado")'>Estado de envío <span class="bitacora-flecha">@Model.Flecha("resultado")</span></a></th>
+                                        <th scope="col" aria-sort="@(Model.EsColumnaOrdenada("resultado") ? (Model.Filtro.Descendente ? "descending" : "ascending") : "none")"><a class="bitacora-orden" asp-action="Index" asp-all-route-data='@Model.RutaOrden("resultado")'>Estado / canal <span class="bitacora-flecha">@Model.Flecha("resultado")</span></a></th>
                                     </tr>
                                     break;
                             }
