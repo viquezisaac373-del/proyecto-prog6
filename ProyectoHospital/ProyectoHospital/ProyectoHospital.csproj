@@ -10,6 +10,8 @@
   <ItemGroup>
     <PackageReference Include="libphonenumber-csharp" Version="9.0.42" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.1" />
+    <PackageReference Include="System.ServiceModel.Http" Version="8.1.2" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.2" />
   </ItemGroup>
 
 </Project>

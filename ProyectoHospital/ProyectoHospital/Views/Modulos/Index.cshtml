@@ -46,6 +46,15 @@
             </div>
         </div>
 
+        <div class="col-md-4">
+            <div class="border rounded bg-white p-4 h-100 d-flex flex-column">
+                <h2 class="h5">Consulta WCF de horarios</h2>
+                <p>Demostración de consulta de horarios semanales mediante SOAP y CoreWCF.</p>
+                <a asp-controller="HorariosWcf" asp-action="Index"
+                   class="btn btn-outline-primary mt-auto">Consultar servicio WCF</a>
+            </div>
+        </div>
+
         @if (esMedico)
         {
             <div class="col-md-4">

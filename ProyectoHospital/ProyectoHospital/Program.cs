@@ -37,6 +37,9 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     ProyectoHospital.Repositories.BitacoraRepository>();
 
+// HU25: cliente SOAP de consultas semanales de horarios médicos.
+builder.Services.AddScoped<ProyectoHospital.Services.HorariosMedicosWcfClient>();
+
 // Alta, consulta y gestión de nacimientos.
 builder.Services.AddScoped<
     ProyectoHospital.Repositories.RecienNacidoRepository>();
