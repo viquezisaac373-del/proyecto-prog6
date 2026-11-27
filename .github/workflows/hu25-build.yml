@@ -1,0 +1,26 @@
+name: HU25 - Compilacion MVC y CoreWCF
+
+on:
+  pull_request:
+    branches: [develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restaurar aplicacion MVC
+        run: dotnet restore ProyectoHospital/ProyectoHospital/ProyectoHospital.csproj
+      - name: Compilar aplicacion MVC
+        run: dotnet build ProyectoHospital/ProyectoHospital/ProyectoHospital.csproj --no-restore -c Release
+      - name: Restaurar servicio CoreWCF
+        run: dotnet restore ProyectoHospital/Hospinomenal.WcfService/Hospinomenal.WcfService.csproj
+      - name: Compilar servicio CoreWCF
+        run: dotnet build ProyectoHospital/Hospinomenal.WcfService/Hospinomenal.WcfService.csproj --no-restore -c Release
