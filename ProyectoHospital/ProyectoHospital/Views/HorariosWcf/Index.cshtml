@@ -1,0 +1,32 @@
+@model ProyectoHospital.Models.ViewModels.ConsultaHorarioWcfViewModel
+@{
+    ViewData["Title"] = "Consulta SOAP de horarios";
+}
+
+<div class="container my-4">
+    <h1 class="h3">Consulta de horarios mediante WCF</h1>
+    <p class="text-muted">
+        Esta página consulta mediante SOAP un servicio CoreWCF independiente.
+        Los horarios son bloques semanales registrados; no equivalen a citas disponibles.
+    </p>
+    <form asp-controller="HorariosWcf" asp-action="Index" method="get"
+          class="border rounded p-3 mb-4">
+        <label for="medicoId" class="form-label">Identificador del médico</label>
+        <input id="medicoId" name="medicoId" type="number" min="1"
+               class="form-control mb-3" required value="@Model.MedicoId" />
+        <button type="submit" class="btn btn-primary">Consultar vía WCF</button>
+        <a asp-controller="Modulos" asp-action="Index"
+           class="btn btn-outline-secondary ms-2">Volver a módulos</a>
+    </form>
+    @if (!string.IsNullOrWhiteSpace(Model.Error))
+    {
+        <div class="alert alert-warning" role="alert">@Model.Error</div>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.Resultado))
+    {
+        <section aria-label="Respuesta del servicio SOAP" class="border rounded p-3">
+            <h2 class="h5">Respuesta del servicio</h2>
+            <pre class="mb-0 text-wrap">@Model.Resultado</pre>
+        </section>
+    }
+</div>
