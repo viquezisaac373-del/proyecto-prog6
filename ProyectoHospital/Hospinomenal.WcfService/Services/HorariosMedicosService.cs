@@ -56,7 +56,7 @@ ORDER BY d.DiaSemana, d.HoraInicio;";
                 string nombreDia = dia is >= 1 and <= 7 ? Dias[dia - 1] : "día no definido";
                 TimeSpan inicio = lector.GetTimeSpan(2);
                 TimeSpan fin = lector.GetTimeSpan(3);
-                franjas.Add($"{nombreDia}: {inicio:hh\\:mm} a {fin:hh\\:mm}");
+                franjas.Add($"{nombreDia}: {inicio.ToString(@"hh\\:mm")} a {fin.ToString(@"hh\\:mm")}");
             }
 
             if (franjas.Count == 0)
