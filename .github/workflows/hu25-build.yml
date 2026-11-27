@@ -24,3 +24,21 @@ jobs:
         run: dotnet restore ProyectoHospital/Hospinomenal.WcfService/Hospinomenal.WcfService.csproj
       - name: Compilar servicio CoreWCF
         run: dotnet build ProyectoHospital/Hospinomenal.WcfService/Hospinomenal.WcfService.csproj --no-restore -c Release
+
+      - name: Comprobar publicacion del WSDL CoreWCF (sin consultar BD)
+        env:
+          ConnectionStrings__HospitalDB: "Server=127.0.0.1;Database=Hospital_DB4_Integracion;Integrated Security=True;Encrypt=True;TrustServerCertificate=True"
+        run: |
+          dotnet run --project ProyectoHospital/Hospinomenal.WcfService/Hospinomenal.WcfService.csproj --no-build -c Release > /tmp/wcf-hu25.log 2>&1 &
+          WCF_PID=$!
+          trap 'kill $WCF_PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl --fail --silent "http://127.0.0.1:5108/HorariosMedicos.svc?wsdl" -o /tmp/horarios.wsdl; then
+              grep -q "ConsultarHorarios" /tmp/horarios.wsdl
+              echo "WSDL publicado con la operacion ConsultarHorarios."
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/wcf-hu25.log
+          exit 1
