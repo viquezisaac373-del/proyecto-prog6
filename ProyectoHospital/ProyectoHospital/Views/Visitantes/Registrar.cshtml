@@ -1,0 +1,1097 @@
+﻿@{
+    ViewData["Title"] = "Registrar visitante";
+}
+
+@* Biblioteca internacional de teléfonos. *@
+
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.8/dist/css/intlTelInput.min.css" />
+
+<style>
+    .iti {
+        width: 100%;
+    }
+
+        .iti .form-control {
+            width: 100%;
+        }
+
+    .iti__country-list {
+        max-width: min(350px, 90vw);
+    }
+
+    .form-control,
+    .form-select {
+        max-width: 100%;
+    }
+</style>
+
+<div class="container mt-4 mb-5">
+
+    <div class="mb-4">
+
+        <h2>Registrar visitante</h2>
+
+        <p class="text-muted">
+            Complete la información para registrar
+            la entrada del visitante en el Sistema Hospitalario.
+        </p>
+
+    </div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body p-4">
+
+            <form id="formRegistroVisitante"
+                  asp-controller="Visitantes"
+                  asp-action="RegistrarEntrada"
+                  asp-antiforgery="true"
+                  method="post"
+                  novalidate>
+
+                @Html.ValidationSummary(
+                    true, "", new { @class = "text-danger mb-3" })
+
+                <div id="mensajeTelefonos"
+                     class="alert alert-warning d-none"
+                     role="alert">
+                </div>
+
+                @* =====================================
+                   1. INFORMACIÓN PERSONAL
+                   ===================================== *@
+
+                <h5 class="mb-3">
+                    Información personal
+                </h5>
+
+                <div class="row g-3">
+
+                    @* IDENTIFICACIÓN *@
+
+                    <div class="col-md-6">
+
+                        <label for="identificacion"
+                               class="form-label">
+                            Cédula costarricense (9 dígitos)
+                        </label>
+
+                        <div class="input-group">
+
+                            @Html.TextBox(
+                                "visitante.NumeroIdentificacion",
+                                null,
+                                new
+                                {
+                                    @class = "form-control",
+                                    id = "identificacion",
+                                    maxlength = "9",
+                                    inputmode = "numeric",
+                                    pattern = "[1-9][0-9]{8}",
+                                    required = "required"
+                                })
+
+                            <button type="button"
+                                    class="btn btn-outline-primary"
+                                    id="btnBuscar">
+                                Buscar
+                            </button>
+
+                        </div>
+
+                        <div id="errorIdentificacion"
+                             class="text-danger small mt-1">
+                        </div>
+
+                        @Html.ValidationMessage(
+                            "visitante.NumeroIdentificacion",
+                            "",
+                            new { @class = "text-danger" })
+
+                        <small id="mensajeBusqueda"
+                               class="text-muted">
+                        </small>
+
+                    </div>
+
+                    <div class="col-md-6"></div>
+
+                    @* NOMBRE *@
+
+                    <div class="col-md-6">
+
+                        <label for="nombre"
+                               class="form-label">
+                            Nombre
+                        </label>
+
+                        @Html.TextBox(
+                            "visitante.Nombre",
+                            null,
+                            new
+                            {
+                                @class = "form-control",
+                                id = "nombre",
+                                maxlength = "100",
+                                required = "required"
+                            })
+
+                        <div id="errorNombre"
+                             class="text-danger small mt-1">
+                        </div>
+
+                        @Html.ValidationMessage(
+                            "visitante.Nombre",
+                            "",
+                            new { @class = "text-danger" })
+
+                    </div>
+
+                    @* APELLIDOS *@
+
+                    <div class="col-md-6">
+
+                        <label for="apellidos"
+                               class="form-label">
+                            Apellidos
+                        </label>
+
+                        @Html.TextBox(
+                            "visitante.Apellidos",
+                            null,
+                            new
+                            {
+                                @class = "form-control",
+                                id = "apellidos",
+                                maxlength = "200",
+                                required = "required"
+                            })
+
+                        <div id="errorApellidos"
+                             class="text-danger small mt-1">
+                        </div>
+
+                        @Html.ValidationMessage(
+                            "visitante.Apellidos",
+                            "",
+                            new { @class = "text-danger" })
+
+                    </div>
+
+                </div>
+
+                <hr class="my-4" />
+
+                @* =====================================
+                   2. INFORMACIÓN DE CONTACTO
+                   ===================================== *@
+
+                <h5 class="mb-3">
+                    Información de contacto
+                </h5>
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+
+                        <label for="telefonoVisible"
+                               class="form-label">
+                            Teléfono
+                        </label>
+
+                        @* Campo visible con bandera. *@
+
+                        <input id="telefonoVisible"
+                               type="tel"
+                               class="form-control"
+                               autocomplete="tel"
+                               inputmode="tel"
+                               required
+                               aria-describedby="errorTelefono" />
+
+                        @* Campo real enviado al controlador. *@
+
+                        @Html.Hidden(
+                            "visitante.Telefono",
+                            null,
+                            new { id = "telefonoCompleto" })
+
+                        <div id="errorTelefono"
+                             class="text-danger small mt-1"
+                             aria-live="polite">
+                        </div>
+
+                        @Html.ValidationMessage(
+                            "visitante.Telefono",
+                            "",
+                            new { @class = "text-danger" })
+
+                    </div>
+
+                </div>
+
+                <hr class="my-4" />
+
+                @* =====================================
+                   3. INFORMACIÓN DE LA VISITA
+                   ===================================== *@
+
+                <h5 class="mb-3">
+                    Información de la visita
+                </h5>
+
+                <div class="row g-3">
+
+                    @* SELECCIÓN DEL PACIENTE *@
+
+                    <div class="col-md-6">
+
+                        <label for="pacienteId"
+                               class="form-label">
+                            Paciente que visita (opcional)
+                        </label>
+
+                        @Html.DropDownList(
+                            "visita.PacienteId",
+                            (IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Pacientes,
+                            "Seleccione al paciente...",
+                            new
+                            {
+                                @class = "form-select",
+                                id = "pacienteId"
+                            })
+
+                        <div class="form-text">
+                            Solo se muestran pacientes activos.
+                        </div>
+
+                        <div id="errorPaciente"
+                             class="text-danger small mt-1">
+                        </div>
+
+                        @Html.ValidationMessage(
+                            "visita.PacienteId",
+                            "",
+                            new { @class = "text-danger" })
+
+                    </div>
+
+                    @* MOTIVO DE VISITA *@
+
+                    <div class="col-12">
+
+                        <label for="motivoVisita"
+                               class="form-label">
+                            Motivo de visita
+                        </label>
+
+                        @Html.TextArea(
+                            "visita.Motivo_Visita",
+                            null,
+                            3,
+                            0,
+                            new
+                            {
+                                @class = "form-control",
+                                id = "motivoVisita",
+                                maxlength = "300",
+                                required = "required"
+                            })
+
+                        <div id="errorMotivo"
+                             class="text-danger small mt-1">
+                        </div>
+
+                        @Html.ValidationMessage(
+                            "visita.Motivo_Visita",
+                            "",
+                            new { @class = "text-danger" })
+
+                    </div>
+
+                    <div class="col-12">
+
+                        <small class="text-muted">
+                            La fecha y hora de entrada se
+                            registrarán automáticamente.
+                        </small>
+
+                    </div>
+
+                </div>
+
+                <hr class="my-4" />
+
+                @* =====================================
+                   4. BOTONES DEL FORMULARIO
+                   ===================================== *@
+
+                <div class="d-flex flex-wrap gap-2
+                    justify-content-end">
+
+                    <a asp-controller="Visitantes"
+                       asp-action="Index"
+                       class="btn btn-outline-secondary">
+                        Cancelar
+                    </a>
+
+                    <button id="btnRegistrar"
+                            type="submit"
+                            class="btn btn-primary"
+                            disabled>
+                        Registrar entrada
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.8/dist/js/intlTelInput.min.js"></script>
+
+    <script>
+
+        // =============================================
+        // 1. ELEMENTOS DEL FORMULARIO
+        // =============================================
+
+        const formulario =
+            document.getElementById("formRegistroVisitante");
+
+        const identificacion =
+            document.getElementById("identificacion");
+
+        const nombre =
+            document.getElementById("nombre");
+
+        const apellidos =
+            document.getElementById("apellidos");
+
+        const telefonoVisible =
+            document.getElementById("telefonoVisible");
+
+        const telefonoCompleto =
+            document.getElementById("telefonoCompleto");
+
+        const paciente =
+            document.getElementById("pacienteId");
+
+        const motivo =
+            document.getElementById("motivoVisita");
+
+        const botonRegistrar =
+            document.getElementById("btnRegistrar");
+
+        const mensajeTelefonos =
+            document.getElementById("mensajeTelefonos");
+
+        let selectorTelefono = null;
+        let telefonoListo = false;
+
+        let numeroBusqueda = 0;
+        let visitanteCargado = false;
+        let visitaActiva = false;
+        // =============================================
+        // 2. EXPRESIONES REGULARES
+        // =============================================
+
+        const regexIdentificacion =
+            /^[1-9][0-9]{8}$/;
+
+        const regexNombre =
+            /^\p{L}+(?: +\p{L}+)*$/u;
+
+        // =============================================
+        // 3. MOSTRAR Y LIMPIAR ERRORES
+        // =============================================
+
+        function mostrarError(campo, idError, mensaje) {
+
+            document.getElementById(idError)
+                .textContent = mensaje;
+
+            campo.setAttribute("aria-invalid", "true");
+
+            campo.classList.add("is-invalid");
+
+            return false;
+        }
+
+        function limpiarError(campo, idError) {
+
+            document.getElementById(idError)
+                .textContent = "";
+
+            campo.removeAttribute("aria-invalid");
+
+            campo.classList.remove("is-invalid");
+
+            const nombreCampo = campo.name ||
+                (campo === telefonoVisible
+                    ? "visitante.Telefono" : "");
+
+            if (nombreCampo) {
+
+                const mensajeServidor = Array.from(
+                    formulario.querySelectorAll("[data-valmsg-for]")
+                ).find(elemento =>
+                    elemento.getAttribute("data-valmsg-for")
+                        === nombreCampo
+                );
+
+                if (mensajeServidor) {
+
+                    mensajeServidor.textContent = "";
+                }
+            }
+        }
+
+        // =============================================
+        // 4. VALIDAR IDENTIFICACIÓN
+        // =============================================
+
+        function validarIdentificacion() {
+
+            limpiarError(
+                identificacion, "errorIdentificacion"
+            );
+
+            if (!identificacion.value.trim()) {
+
+                return mostrarError(
+                    identificacion,
+                    "errorIdentificacion",
+                    "La identificación es obligatoria."
+                );
+            }
+
+            if (!regexIdentificacion.test(
+                identificacion.value
+            )) {
+
+                return mostrarError(
+                    identificacion,
+                    "errorIdentificacion",
+                    "Ingrese una cédula válida de 9 dígitos."
+                );
+            }
+
+            return true;
+        }
+
+        // =============================================
+        // 5. VALIDAR NOMBRE
+        // =============================================
+
+        function validarNombre() {
+
+            limpiarError(nombre, "errorNombre");
+
+            if (!nombre.value.trim()) {
+
+                return mostrarError(
+                    nombre,
+                    "errorNombre",
+                    "El nombre es obligatorio."
+                );
+            }
+
+            if (nombre.value.length > 100 ||
+                !regexNombre.test(nombre.value)) {
+
+                return mostrarError(
+                    nombre,
+                    "errorNombre",
+                    "El nombre solo puede contener letras y espacios."
+                );
+            }
+
+            return true;
+        }
+
+        // =============================================
+        // 6. VALIDAR APELLIDOS
+        // =============================================
+
+        function validarApellidos() {
+
+            limpiarError(apellidos, "errorApellidos");
+
+            if (!apellidos.value.trim()) {
+
+                return mostrarError(
+                    apellidos,
+                    "errorApellidos",
+                    "Los apellidos son obligatorios."
+                );
+            }
+
+            if (apellidos.value.length > 200 ||
+                !regexNombre.test(apellidos.value)) {
+
+                return mostrarError(
+                    apellidos,
+                    "errorApellidos",
+                    "Los apellidos solo pueden contener letras y espacios."
+                );
+            }
+
+            return true;
+        }
+
+        // =============================================
+        // 7. VALIDAR TELÉFONO
+        // =============================================
+
+        function validarTelefono() {
+
+            limpiarError(
+                telefonoVisible, "errorTelefono"
+            );
+
+            if (!telefonoListo ||
+                !telefonoVisible.value.trim() ||
+                !selectorTelefono.isValidNumberPrecise()) {
+
+                telefonoCompleto.value = "";
+
+                return mostrarError(
+                    telefonoVisible,
+                    "errorTelefono",
+                    "Ingrese un número válido para el país seleccionado."
+                );
+            }
+
+            // SQL Server únicamente admite dígitos.
+            // Se conserva el código internacional.
+
+            telefonoCompleto.value =
+                selectorTelefono.getNumber()
+                    .replace(/[^0-9]/g, "");
+
+            return true;
+        }
+
+        // =============================================
+        // 8. VALIDAR PACIENTE SELECCIONADO
+        // =============================================
+
+        function validarPaciente() {
+
+            limpiarError(paciente, "errorPaciente");
+
+            // El paciente es opcional.
+
+            if (paciente.value === "") {
+
+                return true;
+            }
+
+            if (!/^\d+$/.test(paciente.value) ||
+                Number(paciente.value) < 1 ||
+                Number(paciente.value) > 2147483647) {
+
+                return mostrarError(
+                    paciente,
+                    "errorPaciente",
+                    "Seleccione un paciente válido."
+                );
+            }
+
+            return true;
+        }
+
+        // =============================================
+        // 9. VALIDAR MOTIVO DE VISITA
+        // =============================================
+
+        function validarMotivo() {
+
+            limpiarError(motivo, "errorMotivo");
+
+            if (!motivo.value.trim()) {
+
+                return mostrarError(
+                    motivo,
+                    "errorMotivo",
+                    "Ingrese el motivo de la visita."
+                );
+            }
+
+            if (motivo.value.length > 300) {
+
+                return mostrarError(
+                    motivo,
+                    "errorMotivo",
+                    "El motivo no puede superar los 300 caracteres."
+                );
+            }
+
+            return true;
+        }
+
+        // =============================================
+        // 10. PREPARAR TELÉFONOS EXISTENTES
+        // =============================================
+
+        function prepararNumero(valor) {
+
+            if (!valor) {
+
+                return "";
+            }
+
+            const limpio =
+                valor.replace(/[^\d+]/g, "");
+
+            if (limpio.startsWith("+")) {
+
+                return limpio;
+            }
+
+            if (/^\d{8}$/.test(limpio)) {
+
+                return "+506" + limpio;
+            }
+
+            return "+" + limpio;
+        }
+
+        // =============================================
+        // 11. INICIALIZAR SELECTOR DE PAÍSES
+        // =============================================
+
+        if (!window.intlTelInput) {
+
+            mensajeTelefonos.textContent =
+                "No se pudo cargar el selector de países. Revise la conexión a Internet.";
+
+            mensajeTelefonos.classList.remove("d-none");
+
+        } else {
+
+            selectorTelefono = window.intlTelInput(
+                telefonoVisible, {
+
+                    initialCountry: "cr",
+
+                    countryOrder: [
+                        "cr", "ni", "pa",
+                        "us", "mx", "co", "es"
+                    ],
+
+                    separateDialCode: true,
+
+                    showFlags: true,
+
+                    countrySearch: true,
+
+                    strictMode: true,
+
+                    validationNumberTypes: [
+                        "FIXED_LINE",
+                        "MOBILE"
+                    ],
+
+                    loadUtils: () => import(
+                        "https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.8/dist/js/utils.js"
+                    )
+                }
+            );
+
+            selectorTelefono.promise
+
+                .then(() => {
+
+                    if (telefonoCompleto.value) {
+
+                        selectorTelefono.setNumber(
+                            prepararNumero(
+                                telefonoCompleto.value
+                            )
+                        );
+                    }
+
+                    telefonoListo = true;
+
+                    botonRegistrar.disabled = false;
+
+                })
+
+                .catch(() => {
+
+                    mensajeTelefonos.textContent =
+                        "No fue posible cargar la validación telefónica. Recargue la página.";
+
+                    mensajeTelefonos.classList.remove("d-none");
+
+                });
+        }
+
+        // =============================================
+        // 12. VALIDAR AL SALIR DE LOS CAMPOS
+        // =============================================
+
+        identificacion.addEventListener(
+            "blur", validarIdentificacion
+        );
+
+        nombre.addEventListener(
+            "blur", validarNombre
+        );
+
+        apellidos.addEventListener(
+            "blur", validarApellidos
+        );
+
+        motivo.addEventListener(
+            "blur", validarMotivo
+        );
+
+        paciente.addEventListener(
+            "change", validarPaciente
+        );
+
+        telefonoVisible.addEventListener(
+            "blur", () => {
+
+                if (telefonoListo) {
+
+                    validarTelefono();
+                }
+            }
+        );
+
+        // =============================================
+        // 13. RESTRINGIR NOMBRE Y APELLIDOS
+        // =============================================
+
+        nombre.addEventListener("input", () => {
+
+            nombre.value =
+                nombre.value.replace(/[^\p{L} ]/gu, "");
+
+            limpiarError(nombre, "errorNombre");
+
+        });
+
+        apellidos.addEventListener("input", () => {
+
+            apellidos.value =
+                apellidos.value.replace(/[^\p{L} ]/gu, "");
+
+            limpiarError(apellidos, "errorApellidos");
+
+        });
+
+        // =============================================
+        // 14. LIMPIAR ERRORES DE TELÉFONO
+        // =============================================
+
+        telefonoVisible.addEventListener("input", () => {
+
+            telefonoCompleto.value = "";
+
+            limpiarError(
+                telefonoVisible, "errorTelefono"
+            );
+
+        });
+
+        telefonoVisible.addEventListener(
+            "countrychange", () => {
+
+                telefonoCompleto.value = "";
+
+                limpiarError(
+                    telefonoVisible, "errorTelefono"
+                );
+
+            }
+        );
+
+        motivo.addEventListener("input", () => {
+
+            limpiarError(motivo, "errorMotivo");
+
+        });
+
+        // =============================================
+        // 15. BUSCAR VISITANTE EXISTENTE
+        // =============================================
+
+        // =============================================
+        // PROTEGER DATOS PERSONALES DEL VISITANTE
+        // =============================================
+
+        function bloquearDatosPersonales(bloquear) {
+
+            nombre.readOnly = bloquear;
+
+            apellidos.readOnly = bloquear;
+
+            telefonoVisible.readOnly = bloquear;
+
+            if (selectorTelefono) {
+
+                selectorTelefono.setDisabled(bloquear);
+            }
+
+            nombre.classList.toggle("bg-light", bloquear);
+
+            apellidos.classList.toggle("bg-light", bloquear);
+
+            telefonoVisible.classList.toggle("bg-light", bloquear);
+        }
+                async function buscarVisitante() {
+
+            if (!validarIdentificacion() || !telefonoListo) {
+                return;
+            }
+
+            const documento = identificacion.value.trim();
+            const solicitud = ++numeroBusqueda;
+
+            const mensaje =
+                document.getElementById("mensajeBusqueda");
+
+            botonRegistrar.disabled = true;
+
+            mensaje.textContent = "Buscando visitante...";
+            mensaje.className = "text-muted";
+
+            try {
+
+                const url =
+                    '@Url.Action("BuscarVisitante", "Visitantes")'
+                    + '?identificacion='
+                    + encodeURIComponent(documento);
+
+                const respuesta = await fetch(url, {
+                    cache: "no-store"
+                });
+
+                if (!respuesta.ok) {
+                    throw new Error("Error de consulta");
+                }
+
+                const datos = await respuesta.json();
+
+                if (solicitud !== numeroBusqueda ||
+                    identificacion.value.trim() !== documento) {
+                    return;
+                }
+
+                visitaActiva = datos.visitaActiva === true;
+
+                if (datos.encontrado) {
+
+                    nombre.value = datos.nombre;
+                    apellidos.value = datos.apellidos;
+
+                    selectorTelefono.setNumber(
+                        prepararNumero(datos.telefono)
+                    );
+
+                    validarNombre();
+                    validarApellidos();
+                    validarTelefono();
+
+                    visitanteCargado = true;
+
+                    bloquearDatosPersonales(true);
+
+                    if (visitaActiva) {
+
+                        mensaje.textContent =
+                            "El visitante ya tiene una visita activa. " +
+                            "Debe registrar su salida primero.";
+
+                        mensaje.className = "text-danger";
+
+                        identificacion.classList.add("is-invalid");
+
+                        botonRegistrar.disabled = true;
+
+                    } else {
+
+                        mensaje.textContent =
+                            "Visitante registrado. Puede realizar una nueva entrada.";
+
+                        mensaje.className = "text-success";
+
+                        botonRegistrar.disabled = false;
+                    }
+
+                } else {
+
+                    visitanteCargado = false;
+                    visitaActiva = false;
+
+                    bloquearDatosPersonales(false);
+
+                    mensaje.textContent =
+                        "Visitante nuevo. Complete sus datos.";
+
+                    mensaje.className = "text-primary";
+
+                    botonRegistrar.disabled = false;
+                }
+
+            } catch (error) {
+
+                if (solicitud !== numeroBusqueda) {
+                    return;
+                }
+
+                mensaje.textContent =
+                    "No se pudo consultar el visitante. Intente nuevamente.";
+
+                mensaje.className = "text-danger";
+
+                botonRegistrar.disabled = true;
+            }
+        }
+
+                document.getElementById("btnBuscar")
+        .addEventListener("click", () => {
+
+            clearTimeout(temporizadorIdentificacion);
+
+            buscarVisitante();
+
+        });
+
+        // =============================================
+        // 16. RESTRINGIR IDENTIFICACIÓN
+        // =============================================
+
+                     let temporizadorIdentificacion;
+
+        // =============================================
+        // BÚSQUEDA AUTOMÁTICA POR IDENTIFICACIÓN
+        // =============================================
+
+        identificacion.addEventListener("input", () => {
+
+            clearTimeout(temporizadorIdentificacion);
+
+            identificacion.value =
+                identificacion.value
+                    .replace(/[^0-9]/g, "")
+                    .slice(0, 9);
+
+            numeroBusqueda++;
+
+            visitaActiva = false;
+            visitanteCargado = false;
+
+            bloquearDatosPersonales(false);
+
+            nombre.value = "";
+            apellidos.value = "";
+            telefonoCompleto.value = "";
+
+            if (telefonoListo) {
+                selectorTelefono.setNumber("");
+            }
+
+            limpiarError(
+                identificacion, "errorIdentificacion"
+            );
+
+            document.getElementById("mensajeBusqueda")
+                .textContent = "";
+
+            // Bloquear el registro hasta comprobar la identificación.
+
+            botonRegistrar.disabled = true;
+
+            // Buscar automáticamente al completar los 9 dígitos.
+
+            if (regexIdentificacion.test(identificacion.value)) {
+
+                temporizadorIdentificacion = setTimeout(() => {
+
+                    buscarVisitante();
+
+                }, 400);
+            }
+
+        });
+        // =============================================
+        // 17. VALIDAR ANTES DE REGISTRAR
+        // =============================================
+
+        formulario.addEventListener("submit", evento => {
+
+            // Impedir una segunda visita activa.
+
+            if (visitaActiva) {
+
+                evento.preventDefault();
+                evento.stopImmediatePropagation();
+
+                mostrarError(
+                    identificacion,
+                    "errorIdentificacion",
+                    "El visitante ya tiene una visita activa. " +
+                    "Debe registrar su salida primero."
+                );
+
+                botonRegistrar.disabled = true;
+
+                return;
+            }
+
+            // Comprobar todos los campos del formulario.
+
+            const resultados = [
+
+                validarIdentificacion(),
+
+                validarNombre(),
+
+                validarApellidos(),
+
+                validarTelefono(),
+
+                validarPaciente(),
+
+                validarMotivo()
+
+            ];
+
+            // Impedir el registro si existen errores.
+
+            if (resultados.includes(false)) {
+
+                evento.preventDefault();
+
+                evento.stopImmediatePropagation();
+
+                formulario.querySelector(
+                    '[aria-invalid="true"]'
+                )?.focus();
+
+                return;
+            }
+
+            // Evitar múltiples envíos del formulario.
+
+            botonRegistrar.disabled = true;
+
+        }, true);
+
+    </script>
+}

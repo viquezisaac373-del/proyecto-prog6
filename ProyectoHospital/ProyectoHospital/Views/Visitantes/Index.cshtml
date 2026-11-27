@@ -1,0 +1,727 @@
+﻿@model System.Data.DataTable
+@using System.Data
+@using System.Linq
+
+@{
+    ViewData["Title"] = "Control de visitantes";
+
+    var registros = Model.AsEnumerable().ToList();
+
+    var hoy = DateTime.Today;
+
+    // Visitantes actualmente dentro del hospital.
+    int visitantesActivos = registros.Count(
+        fila => fila["FechaHoraSalida"] == DBNull.Value);
+
+    // Entradas registradas durante el día.
+    int entradasHoy = registros.Count(
+        fila => Convert.ToDateTime(
+            fila["FechaHoraEntrada"]).Date == hoy);
+
+    // Salidas registradas durante el día.
+    int salidasHoy = registros.Count(
+        fila => fila["FechaHoraSalida"] != DBNull.Value &&
+        Convert.ToDateTime(
+            fila["FechaHoraSalida"]).Date == hoy);
+}
+
+<style>
+
+    .indicador-visitantes {
+        border-left: 4px solid #39254d;
+        border-radius: 6px;
+        height: 100%;
+    }
+
+    .indicador-titulo {
+        color: #6c757d;
+        font-size: 0.95rem;
+    }
+
+    .indicador-numero {
+        color: #39254d;
+        font-size: 2rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .tabla-visitantes th {
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    .tabla-visitantes td {
+        vertical-align: middle;
+    }
+
+    .fecha-visita {
+        white-space: nowrap;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #39254d;
+        border-color: #39254d;
+        color: white;
+    }
+
+    .pagination .page-link {
+        color: #39254d;
+    }
+
+</style>
+
+<div class="container mt-4 mb-5">
+
+    <!-- ENCABEZADO -->
+
+    <div class="mb-4">
+
+        <h2>Control de visitantes</h2>
+
+        <p class="text-muted">
+            Gestione las entradas y salidas de visitantes
+            del Sistema Hospitalario.
+        </p>
+
+    </div>
+
+    <!-- MENSAJES DEL SISTEMA -->
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show"
+             role="alert">
+
+            @TempData["Exito"]
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show"
+             role="alert">
+
+            @TempData["Error"]
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+
+        </div>
+    }
+
+    @* =====================================
+       1. INDICADORES DE VISITANTES
+       ===================================== *@
+
+    @if (Model.Columns.Contains("FechaHoraEntrada") &&
+         Model.Columns.Contains("FechaHoraSalida"))
+    {
+        <div class="row g-3 mb-4">
+
+            <div class="col-md-4">
+
+                <div class="card shadow-sm indicador-visitantes">
+
+                    <div class="card-body">
+
+                        <p class="indicador-titulo mb-2">
+                            Visitantes en el hospital
+                        </p>
+
+                        <p class="indicador-numero">
+                            @visitantesActivos
+                        </p>
+
+                        <small class="text-muted">
+                            Visitas actualmente activas
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="col-md-4">
+
+                <div class="card shadow-sm indicador-visitantes">
+
+                    <div class="card-body">
+
+                        <p class="indicador-titulo mb-2">
+                            Entradas de hoy
+                        </p>
+
+                        <p class="indicador-numero">
+                            @entradasHoy
+                        </p>
+
+                        <small class="text-muted">
+                            Ingresos registrados durante el día
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="col-md-4">
+
+                <div class="card shadow-sm indicador-visitantes">
+
+                    <div class="card-body">
+
+                        <p class="indicador-titulo mb-2">
+                            Salidas de hoy
+                        </p>
+
+                        <p class="indicador-numero">
+                            @salidasHoy
+                        </p>
+
+                        <small class="text-muted">
+                            Salidas registradas durante el día
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+    @* =====================================
+       2. BOTÓN DE REGISTRO
+       ===================================== *@
+
+    <div class="mb-3">
+
+        <a asp-controller="Visitantes"
+           asp-action="Registrar"
+           class="btn btn-primary">
+
+            Registrar nuevo visitante
+
+        </a>
+
+    </div>
+
+    @* =====================================
+       3. TABLA DE VISITANTES
+       ===================================== *@
+
+    <div class="card shadow-sm">
+
+        <div class="card-header">
+
+            Visitantes registrados
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-striped
+                              table-hover tabla-visitantes">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Identificación</th>
+
+                            <th>Nombre completo</th>
+
+                            <th>Teléfono</th>
+
+                            <th>Paciente</th>
+
+                            <th>Motivo de visita</th>
+
+                            <th>Entrada</th>
+
+                            <th>Salida</th>
+
+                            <th>Estado</th>
+
+                            <th>Acciones</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="tablaVisitantes">
+
+                        @foreach (DataRow fila in registros)
+                        {
+                            bool activa =
+                                fila["FechaHoraSalida"] == DBNull.Value;
+
+                            string nombreCompleto =
+                                $"{fila["Nombre"]} {fila["Apellidos"]}";
+
+                            <tr class="registro-visitante">
+
+                                <td>
+                                    @fila["NumeroIdentificacion"]
+                                </td>
+
+                                <td>
+                                    @nombreCompleto
+                                </td>
+
+                                <td>
+                                    @FormatearTelefono(
+                                        fila["Telefono"].ToString())
+                                </td>
+
+                                <td>
+                                    @(fila["PacienteId"] == DBNull.Value
+                                        ? "No asignado"
+                                        : fila["Paciente"].ToString())
+                                </td>
+
+                                <td>
+                                    @fila["Motivo_Visita"]
+                                </td>
+
+                                <td class="fecha-visita">
+
+                                    @(Convert.ToDateTime(
+                                        fila["FechaHoraEntrada"])
+                                        .ToString("dd/MM/yyyy HH:mm"))
+
+                                </td>
+
+                                <td class="fecha-visita">
+
+                                    @(activa
+                                        ? "Pendiente"
+                                        : Convert.ToDateTime(
+                                            fila["FechaHoraSalida"])
+                                            .ToString("dd/MM/yyyy HH:mm"))
+
+                                </td>
+
+                                <td>
+
+                                    @if (activa)
+                                    {
+                                        <span class="badge bg-success">
+                                            En visita
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">
+                                            Finalizada
+                                        </span>
+                                    }
+
+                                </td>
+
+                                <td>
+
+                                    @if (activa)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-outline-primary btn-sm"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#modalSalida"
+                                                data-registro="@fila["RegistroVisitaId"]"
+                                                data-visitante="@nombreCompleto">
+
+                                            Registrar salida
+
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">
+                                            Completada
+                                        </span>
+                                    }
+
+                                </td>
+
+                            </tr>
+                        }
+
+                        @if (registros.Count == 0)
+                        {
+                            <tr>
+
+                                <td colspan="9"
+                                    class="text-center text-muted py-4">
+
+                                    No hay registros de visitas
+                                    disponibles.
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            @* PAGINACIÓN *@
+
+            <div class="d-flex flex-wrap
+                        justify-content-between
+                        align-items-center gap-2 mt-3">
+
+                <small id="informacionPagina"
+                       class="text-muted">
+                </small>
+
+                <nav aria-label="Paginación de visitantes">
+
+                    <ul class="pagination pagination-sm mb-0"
+                        id="paginacionVisitantes">
+                    </ul>
+
+                </nav>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@* =====================================
+   4. CONFIRMACIÓN DE SALIDA
+   ===================================== *@
+
+<div class="modal fade"
+     id="modalSalida"
+     tabindex="-1"
+     aria-labelledby="tituloModalSalida"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title"
+                    id="tituloModalSalida">
+
+                    Confirmar salida
+
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar">
+                </button>
+
+            </div>
+
+            <form asp-controller="Visitantes"
+                  asp-action="RegistrarSalida"
+                  asp-antiforgery="true"
+                  method="post">
+
+                <div class="modal-body">
+
+                    <input type="hidden"
+                           name="registroVisitaId"
+                           id="registroSalidaId" />
+
+                    <p>
+                        ¿Desea registrar la salida del visitante?
+                    </p>
+
+                    <div class="bg-light border rounded p-3 mb-3">
+
+                        <strong id="nombreVisitanteSalida">
+                        </strong>
+
+                    </div>
+
+                    <small class="text-muted">
+
+                        La fecha y hora de salida se registrarán
+                        automáticamente y la visita quedará finalizada.
+
+                    </small>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+
+                        Cancelar
+
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-primary">
+
+                        Confirmar salida
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+@* =====================================
+   5. FORMATO DE TELÉFONOS
+   ===================================== *@
+
+@functions {
+
+    private string FormatearTelefono(string? telefono)
+    {
+        if (string.IsNullOrWhiteSpace(telefono))
+        {
+            return "No registrado";
+        }
+
+        string numero = new string(
+            telefono.Where(c => c >= '0' && c <= '9')
+                    .ToArray());
+
+        // Número nacional de Costa Rica sin prefijo.
+        if (numero.Length == 8)
+        {
+            return numero.Substring(0, 4)
+                + "-"
+                + numero.Substring(4, 4);
+        }
+
+        // Número costarricense con código internacional.
+        if (numero.Length == 11 &&
+            numero.StartsWith("506"))
+        {
+            return "+506 "
+                + numero.Substring(3, 4)
+                + "-"
+                + numero.Substring(7, 4);
+        }
+
+        // Conservar otros formatos registrados.
+        return telefono;
+    }
+}
+
+@section Scripts {
+
+    <script>
+
+        // =====================================
+        // CONFIRMACIÓN DE SALIDA
+        // =====================================
+
+        const modalSalida =
+            document.getElementById("modalSalida");
+
+        modalSalida.addEventListener(
+            "show.bs.modal", function (evento) {
+
+                const boton = evento.relatedTarget;
+
+                if (!boton) {
+                    return;
+                }
+
+                const registro =
+                    boton.getAttribute("data-registro");
+
+                const visitante =
+                    boton.getAttribute("data-visitante");
+
+                document.getElementById(
+                    "registroSalidaId"
+                ).value = registro;
+
+                document.getElementById(
+                    "nombreVisitanteSalida"
+                ).textContent = visitante;
+
+            });
+
+        // =====================================
+        // PAGINACIÓN DE VISITANTES
+        // =====================================
+
+        const filas = Array.from(
+            document.querySelectorAll(
+                ".registro-visitante"
+            )
+        );
+
+        const registrosPorPagina = 10;
+
+        let paginaActual = 1;
+
+        const totalPaginas = Math.ceil(
+            filas.length / registrosPorPagina
+        );
+
+        const paginacion =
+            document.getElementById(
+                "paginacionVisitantes"
+            );
+
+        const informacion =
+            document.getElementById(
+                "informacionPagina"
+            );
+
+        function mostrarPagina(pagina) {
+
+            paginaActual = pagina;
+
+            const inicio =
+                (pagina - 1) * registrosPorPagina;
+
+            const fin =
+                inicio + registrosPorPagina;
+
+            filas.forEach((fila, indice) => {
+
+                fila.style.display =
+                    indice >= inicio && indice < fin
+                        ? ""
+                        : "none";
+
+            });
+
+            if (filas.length === 0) {
+
+                informacion.textContent =
+                    "No hay registros disponibles.";
+
+            } else {
+
+                informacion.textContent =
+                    "Mostrando "
+                    + (inicio + 1)
+                    + "–"
+                    + Math.min(fin, filas.length)
+                    + " de "
+                    + filas.length
+                    + " registros";
+            }
+
+            crearPaginacion();
+        }
+
+        function crearBotonPagina(
+            texto, pagina, deshabilitado, activo) {
+
+            const elemento =
+                document.createElement("li");
+
+            elemento.className = "page-item";
+
+            if (deshabilitado) {
+                elemento.classList.add("disabled");
+            }
+
+            if (activo) {
+                elemento.classList.add("active");
+            }
+
+            const boton =
+                document.createElement("button");
+
+            boton.type = "button";
+
+            boton.className = "page-link";
+
+            boton.textContent = texto;
+
+            boton.disabled = deshabilitado;
+
+            if (activo) {
+                boton.setAttribute("aria-current", "page");
+            }
+
+            boton.addEventListener("click", () => {
+
+                if (!deshabilitado) {
+                    mostrarPagina(pagina);
+                }
+
+            });
+
+            elemento.appendChild(boton);
+
+            paginacion.appendChild(elemento);
+        }
+
+        function crearPaginacion() {
+
+            paginacion.innerHTML = "";
+
+            if (totalPaginas <= 1) {
+                return;
+            }
+
+            crearBotonPagina(
+                "Anterior",
+                paginaActual - 1,
+                paginaActual === 1,
+                false
+            );
+
+            const primera = Math.max(1, paginaActual - 2);
+            const ultima = Math.min(
+                totalPaginas, paginaActual + 2);
+
+            for (let i = primera;
+                 i <= ultima;
+                 i++) {
+
+                crearBotonPagina(
+                    i,
+                    i,
+                    false,
+                    i === paginaActual
+                );
+            }
+
+            crearBotonPagina(
+                "Siguiente",
+                paginaActual + 1,
+                paginaActual === totalPaginas,
+                false
+            );
+        }
+
+        mostrarPagina(1);
+
+    </script>
+}

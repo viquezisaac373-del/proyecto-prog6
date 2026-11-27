@@ -41,6 +41,10 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     ProyectoHospital.Repositories.RecienNacidoRepository>();
 
+// Control de entradas, salidas y consultas de visitantes.
+builder.Services.AddScoped<
+    ProyectoHospital.Services.VisitantesService>();
+
 // PasswordHasher de ASP.NET Core Identity (PBKDF2, versión Identity V3).
 // Se mantiene el mismo formato verificable al actualizar su costo.
 builder.Services.Configure<PasswordHasherOptions>(options =>
